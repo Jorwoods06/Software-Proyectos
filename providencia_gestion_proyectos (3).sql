@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 14-12-2025 a las 20:08:51
+-- Tiempo de generación: 27-12-2025 a las 23:01:56
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -32,9 +32,9 @@ CREATE TABLE `actividades` (
   `proyecto_id` int(11) NOT NULL,
   `nombre` varchar(150) NOT NULL,
   `descripcion` text DEFAULT NULL,
-  `fecha_inicio` date DEFAULT NULL,
-  `fecha_fin` date DEFAULT NULL,
-  `estado` enum('pendiente','en_progreso','finalizado') DEFAULT 'pendiente',
+  `fecha_inicio` datetime DEFAULT NULL,
+  `fecha_fin` datetime DEFAULT NULL,
+  `estado` enum('pendiente','en_progreso','finalizado','eliminado') DEFAULT 'pendiente',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -49,9 +49,11 @@ INSERT INTO `actividades` (`id`, `proyecto_id`, `nombre`, `descripcion`, `fecha_
 (4, 9, 'evalucion', 'realizar analisis de la propuesta', NULL, NULL, 'pendiente', '2025-11-19 21:15:52', '2025-11-19 21:15:52'),
 (6, 10, 'Informarme sobre software de proyectos', 'indagar sobre el funcionamiento correctivo de software de proyectos y como se podria llevar a cabo en este mismo sistema', NULL, NULL, 'pendiente', '2025-12-12 01:59:07', '2025-12-12 01:59:07'),
 (7, 10, 'mejorar el sidebar', 'mejorarlo', NULL, NULL, 'pendiente', '2025-12-12 21:38:01', '2025-12-12 21:38:01'),
-(8, 5, 's', 's', NULL, NULL, 'pendiente', '2025-12-13 02:00:39', '2025-12-13 02:00:39'),
-(9, 13, 'r', 'r', NULL, NULL, 'pendiente', '2025-12-13 07:05:04', '2025-12-13 07:05:04'),
-(10, 13, 'hijueputa', 'sa', NULL, NULL, 'pendiente', '2025-12-13 07:07:48', '2025-12-13 07:07:48');
+(8, 5, 'Funcionamiento CRUD', 's', '2025-12-22 12:37:51', NULL, 'pendiente', '2025-12-13 02:00:39', '2025-12-22 17:37:51'),
+(9, 13, 'Fase 1 - prueba', 'r', '2025-12-16 17:49:34', NULL, 'pendiente', '2025-12-13 07:05:04', '2025-12-16 22:49:34'),
+(10, 13, 'Tareas Desarrollo', 'sa', '2025-12-14 20:25:59', NULL, 'pendiente', '2025-12-13 07:07:48', '2025-12-15 01:26:06'),
+(11, 13, 'prueba', 's', '2025-12-14 00:00:00', '2025-12-16 16:21:59', 'pendiente', '2025-12-15 01:21:38', '2025-12-15 01:21:38'),
+(12, 13, 'prueba 2', 'prueba', '2025-12-14 00:00:00', NULL, 'pendiente', '2025-12-15 01:29:08', '2025-12-15 01:29:26');
 
 -- --------------------------------------------------------
 
@@ -66,6 +68,14 @@ CREATE TABLE `comentarios` (
   `comentario` text NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `comentarios`
+--
+
+INSERT INTO `comentarios` (`id`, `tarea_id`, `user_id`, `comentario`, `created_at`) VALUES
+(1, 4, 16, 'El dia 22/12/25 se empezo la documentacion del software de proyectos', '2025-12-22 20:11:25'),
+(2, 4, 2, 'Dejo adjunto evidencia', '2025-12-23 01:36:01');
 
 -- --------------------------------------------------------
 
@@ -117,6 +127,13 @@ CREATE TABLE `evidencias` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `evidencias`
+--
+
+INSERT INTO `evidencias` (`id`, `tarea_id`, `archivo`, `tipo`, `created_at`) VALUES
+(1, 4, 'evidencias/tarea_4_informe-de-equipos-localizados-en-el-archivador_1766437377_jigh6jle.docx', 'documento', '2025-12-23 02:02:58');
+
 -- --------------------------------------------------------
 
 --
@@ -165,6 +182,7 @@ CREATE TABLE `proyectos` (
   `estado` enum('pendiente','en_progreso','finalizado','cancelado') DEFAULT 'pendiente',
   `color` varchar(7) DEFAULT NULL,
   `departamento_id` int(11) DEFAULT NULL,
+  `created_by` int(11) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -173,17 +191,17 @@ CREATE TABLE `proyectos` (
 -- Volcado de datos para la tabla `proyectos`
 --
 
-INSERT INTO `proyectos` (`id`, `nombre`, `descripcion`, `fecha_inicio`, `fecha_fin`, `estado`, `color`, `departamento_id`, `created_at`, `updated_at`) VALUES
-(3, 'prueba 1 de edicion2', 'prueba de edición 123.', '2025-09-09', '2025-09-24', 'pendiente', '#D63384', 1, '2025-09-18 04:43:20', '2025-12-12 20:43:57'),
-(4, 'ensayo', 'proyecto de prueba', '2025-09-19', '2025-09-30', 'cancelado', '#DC3545', 1, '2025-09-19 19:36:22', '2025-12-12 20:43:57'),
-(5, 'Migración de Google a Microsoft', 'Este proyecto se lleva a cabo con el objetivo de centralizar toda nuestra información y aplicaciones en una sola plataforma, integradas bajo una misma cuenta. Entre los beneficios, destacamos la unificación de toda la paquetería de oficina, lo que nos permitirá trabajar de manera más eficiente y completamente integrada..', '2025-09-22', '2025-09-30', 'pendiente', '#FD7E14', 1, '2025-09-19 21:17:57', '2025-12-12 20:43:57'),
-(6, 'ffffbbbbbzzzzc666', 'fffffxsssss', '2025-10-08', '2025-10-30', 'cancelado', '#FFC107', 1, '2025-10-08 17:18:54', '2025-12-12 20:43:57'),
-(7, 'proyecto', 'proyectoddd', '2025-10-08', '2025-10-17', 'cancelado', '#20C997', 1, '2025-10-08 17:30:36', '2025-12-12 20:43:57'),
-(8, 'gestion de proyectos', 'prueba.', '2025-10-28', '2025-10-31', 'cancelado', '#198754', 1, '2025-10-28 18:05:17', '2025-12-12 20:43:57'),
-(9, 'gestion de proyectos', 'presentacion de proyectos de forma que se pueda realizar seguimiento de las tareas y cumplimiento y revision de tareas', '2025-11-19', '2025-11-30', 'pendiente', '#0DCAF0', 1, '2025-11-19 18:47:09', '2025-12-12 20:43:57'),
-(10, 'Terminar Proyecto de Proyectos 🦅🔥', 'xd', '2025-12-11', '2025-12-31', 'cancelado', '#6610F2', 1, '2025-12-12 01:58:05', '2025-12-13 07:01:28'),
-(11, 'Prueba Proyectos', 'xd', '2025-12-12', '2025-12-20', 'cancelado', '#E83E8C', 1, '2025-12-13 01:44:08', '2025-12-13 04:59:29'),
-(13, 'Terminar Proyecto de Proyectos 🦅🔥', 's', '2025-12-12', '2025-12-31', 'pendiente', '#0DCAF0', 1, '2025-12-13 07:02:48', '2025-12-13 07:02:48');
+INSERT INTO `proyectos` (`id`, `nombre`, `descripcion`, `fecha_inicio`, `fecha_fin`, `estado`, `color`, `departamento_id`, `created_by`, `created_at`, `updated_at`) VALUES
+(3, 'prueba 1 de edicion2', 'prueba de edición 123.', '2025-09-09', '2025-09-24', 'pendiente', '#D63384', 1, 2, '2025-09-18 04:43:20', '2025-12-14 19:44:18'),
+(4, 'ensayo', 'proyecto de prueba', '2025-09-19', '2025-09-30', 'cancelado', '#DC3545', 1, 2, '2025-09-19 19:36:22', '2025-12-14 19:44:18'),
+(5, 'Migración de Google a Microsoft', 'Este proyecto se lleva a cabo con el objetivo de centralizar toda nuestra información y aplicaciones en una sola plataforma, integradas bajo una misma cuenta. Entre los beneficios, destacamos la unificación de toda la paquetería de oficina, lo que nos permitirá trabajar de manera más eficiente y completamente integrada..', '2025-09-22', '2025-09-30', 'pendiente', '#FD7E14', 1, 7, '2025-09-19 21:17:57', '2025-12-14 19:44:18'),
+(6, 'ffffbbbbbzzzzc666', 'fffffxsssss', '2025-10-08', '2025-10-30', 'cancelado', '#FFC107', 1, 2, '2025-10-08 17:18:54', '2025-12-14 19:44:18'),
+(7, 'proyecto', 'proyectoddd', '2025-10-08', '2025-10-17', 'cancelado', '#20C997', 1, 2, '2025-10-08 17:30:36', '2025-12-14 19:44:18'),
+(8, 'gestion de proyectos', 'prueba.', '2025-10-28', '2025-10-31', 'cancelado', '#198754', 1, 2, '2025-10-28 18:05:17', '2025-12-14 19:44:18'),
+(9, 'gestion de proyectos', 'presentacion de proyectos de forma que se pueda realizar seguimiento de las tareas y cumplimiento y revision de tareas', '2025-11-19', '2025-11-30', 'pendiente', '#0DCAF0', 1, 2, '2025-11-19 18:47:09', '2025-12-14 19:44:18'),
+(10, 'Terminar Proyecto de Proyectos 🦅🔥', 'xd', '2025-12-11', '2025-12-31', 'cancelado', '#6610F2', 1, 2, '2025-12-12 01:58:05', '2025-12-14 19:44:18'),
+(11, 'Prueba Proyectos', 'xd', '2025-12-12', '2025-12-20', 'cancelado', '#E83E8C', 1, 16, '2025-12-13 01:44:08', '2025-12-14 19:44:18'),
+(13, 'Terminar Proyecto de Proyectos 🦅🔥', 's', '2025-12-12', '2025-12-31', 'pendiente', '#0DCAF0', 1, 16, '2025-12-13 07:02:48', '2025-12-14 19:44:18');
 
 -- --------------------------------------------------------
 
@@ -198,6 +216,23 @@ CREATE TABLE `proyecto_user_permiso` (
   `permiso_id` int(11) NOT NULL,
   `tipo` enum('allow','deny') NOT NULL DEFAULT 'allow'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `proyecto_user_permiso`
+--
+
+INSERT INTO `proyecto_user_permiso` (`id`, `proyecto_id`, `user_id`, `permiso_id`, `tipo`) VALUES
+(1, 13, 17, 5, 'allow'),
+(2, 13, 17, 9, 'allow'),
+(3, 13, 17, 6, 'allow'),
+(4, 13, 17, 10, 'allow'),
+(5, 13, 17, 7, 'allow'),
+(6, 13, 17, 3, 'allow'),
+(7, 13, 17, 11, 'allow'),
+(8, 13, 17, 13, 'allow'),
+(9, 13, 17, 8, 'allow'),
+(10, 13, 17, 4, 'allow'),
+(11, 13, 17, 12, 'allow');
 
 -- --------------------------------------------------------
 
@@ -229,7 +264,8 @@ INSERT INTO `proyecto_usuario` (`id`, `proyecto_id`, `user_id`, `rol_proyecto`, 
 (9, 10, 2, 'lider', '2025-12-12 01:58:06', '2025-12-12 01:58:06'),
 (10, 11, 16, 'lider', '2025-12-13 01:44:08', '2025-12-13 01:44:08'),
 (12, 13, 16, 'lider', '2025-12-13 07:02:48', '2025-12-13 07:02:48'),
-(13, 13, 2, 'colaborador', '2025-12-13 07:02:48', '2025-12-13 07:02:48');
+(13, 13, 2, 'colaborador', '2025-12-13 07:02:48', '2025-12-13 07:02:48'),
+(14, 13, 17, 'colaborador', '2025-12-16 22:14:44', '2025-12-16 22:14:44');
 
 -- --------------------------------------------------------
 
@@ -331,9 +367,9 @@ CREATE TABLE `tareas` (
   `actividad_id` int(11) DEFAULT NULL,
   `nombre` varchar(150) NOT NULL,
   `descripcion` text DEFAULT NULL,
-  `fecha_inicio` date DEFAULT NULL,
-  `fecha_fin` date DEFAULT NULL,
-  `estado` enum('pendiente','en_progreso','completado') DEFAULT 'pendiente',
+  `fecha_inicio` datetime DEFAULT NULL,
+  `fecha_fin` datetime DEFAULT NULL,
+  `estado` enum('pendiente','en_progreso','completado','eliminado') DEFAULT 'pendiente',
   `prioridad` enum('baja','media','alta') DEFAULT 'media',
   `responsable_id` int(11) DEFAULT NULL,
   `user_id` int(11) DEFAULT NULL,
@@ -346,20 +382,36 @@ CREATE TABLE `tareas` (
 --
 
 INSERT INTO `tareas` (`id`, `actividad_id`, `nombre`, `descripcion`, `fecha_inicio`, `fecha_fin`, `estado`, `prioridad`, `responsable_id`, `user_id`, `created_at`, `updated_at`) VALUES
-(1, 9, 'Programar', NULL, NULL, '2025-12-12', 'pendiente', 'media', NULL, NULL, '2025-12-13 07:10:54', '2025-12-13 07:31:43'),
-(2, 9, 'desplegar', NULL, NULL, '2025-12-12', 'pendiente', 'media', NULL, NULL, '2025-12-13 07:11:42', '2025-12-13 07:11:42'),
+(1, 9, 'Programar', NULL, NULL, '2025-12-12 23:59:59', 'pendiente', 'media', NULL, NULL, '2025-12-13 07:10:54', '2025-12-15 18:03:23'),
+(2, 9, 'desplegar', NULL, NULL, '2025-12-12 23:59:59', 'pendiente', 'media', NULL, NULL, '2025-12-13 07:11:42', '2025-12-14 19:44:18'),
 (3, 4, 'Estudiar', NULL, NULL, NULL, 'pendiente', 'media', NULL, NULL, '2025-12-13 07:31:24', '2025-12-13 07:31:24'),
-(4, 9, 'Documentacion sobre software de proyectos', NULL, NULL, '2025-12-31', 'pendiente', 'baja', NULL, NULL, '2025-12-13 07:32:23', '2025-12-13 07:32:23'),
-(5, NULL, 'dormir', NULL, NULL, '2025-12-12', 'completado', 'media', NULL, 16, '2025-12-13 08:00:44', '2025-12-13 21:18:51'),
-(6, NULL, 'volar', NULL, NULL, NULL, 'pendiente', 'media', NULL, 16, '2025-12-13 08:08:22', '2025-12-13 08:08:22'),
-(7, 10, 'Añadir funciones de edicion/eliminacion', NULL, NULL, '2025-12-13', 'pendiente', 'media', NULL, NULL, '2025-12-13 21:14:43', '2025-12-13 21:14:43'),
-(8, 9, 's', NULL, NULL, NULL, 'pendiente', 'media', NULL, NULL, '2025-12-14 22:16:36', '2025-12-14 22:16:36'),
-(9, 9, 't', NULL, NULL, NULL, 'pendiente', 'media', NULL, NULL, '2025-12-14 22:16:43', '2025-12-14 22:16:43'),
-(10, 9, 's', NULL, NULL, '2025-12-31', 'pendiente', 'media', NULL, NULL, '2025-12-14 22:17:01', '2025-12-14 22:17:01'),
-(11, 10, 'Crear paginadora reutilizable', NULL, NULL, NULL, 'pendiente', 'media', NULL, NULL, '2025-12-14 22:20:18', '2025-12-14 22:20:18'),
-(12, 10, 'modificar el sistema de fechas, que ponga fecha inicio y fin', NULL, NULL, NULL, 'pendiente', 'media', NULL, NULL, '2025-12-14 22:20:44', '2025-12-14 22:20:44'),
-(14, 10, 'corregir estados de tareas', NULL, NULL, NULL, 'pendiente', 'media', NULL, NULL, '2025-12-14 22:21:11', '2025-12-14 22:21:11'),
-(15, 10, 'revisar flujo entre diferentes usuario', NULL, NULL, NULL, 'pendiente', 'media', NULL, NULL, '2025-12-14 22:21:42', '2025-12-14 22:21:42');
+(4, 9, 'Documentacion sobre software de proyectos', 'La presente tarea consiste en elaborar una documentación detallada sobre software de gestión de proyectos. El objetivo es investigar y recopilar información relevante sobre diferentes herramientas utilizadas para planificar, organizar, coordinar y supervisar proyectos en distintos ámbitos. La documentación debe incluir aspectos como: funciones principales, ventajas y desventajas, ejemplos de software disponibles en el mercado, y la manera en que estas herramientas facilitan la gestión eficiente de proyectos', NULL, '2025-12-31 23:59:59', 'pendiente', 'baja', NULL, NULL, '2025-12-13 07:32:23', '2025-12-23 00:56:09'),
+(5, NULL, 'dormir', NULL, NULL, '2025-12-12 23:59:59', 'completado', 'media', NULL, 16, '2025-12-13 08:00:44', '2025-12-14 19:44:18'),
+(6, NULL, 'volar', NULL, NULL, NULL, 'completado', 'media', NULL, 16, '2025-12-13 08:08:22', '2025-12-23 18:45:39'),
+(7, 10, 'Añadir funciones de edicion/eliminacion', NULL, NULL, '2025-12-13 23:59:59', 'completado', 'media', NULL, NULL, '2025-12-13 21:14:43', '2025-12-15 02:02:01'),
+(8, 9, 's', NULL, NULL, NULL, 'eliminado', 'media', NULL, NULL, '2025-12-14 22:16:36', '2025-12-15 01:14:17'),
+(9, 9, 't', NULL, NULL, NULL, 'completado', 'media', NULL, NULL, '2025-12-14 22:16:43', '2025-12-15 19:44:53'),
+(10, 9, 's', NULL, NULL, '2025-12-31 23:59:59', 'pendiente', 'media', NULL, NULL, '2025-12-14 22:17:01', '2025-12-23 00:46:01'),
+(11, 10, 'Crear paginadora reutilizable', NULL, NULL, NULL, 'completado', 'media', NULL, NULL, '2025-12-14 22:20:18', '2025-12-15 21:31:29'),
+(12, 10, 'modificar el sistema de fechas, que ponga fecha inicio y fin', NULL, NULL, NULL, 'completado', 'media', NULL, NULL, '2025-12-14 22:20:44', '2025-12-15 17:28:06'),
+(14, 10, 'corregir estados de tareas', NULL, NULL, NULL, 'completado', 'media', NULL, NULL, '2025-12-14 22:21:11', '2025-12-15 21:15:07'),
+(15, 10, 'revisar flujo entre diferentes usuario', NULL, NULL, NULL, 'pendiente', 'media', NULL, NULL, '2025-12-14 22:21:42', '2025-12-15 01:31:50'),
+(16, 9, 'prueba', 'Pruebas descripcion', '2025-12-14 14:51:00', '2025-12-15 08:51:59', 'pendiente', 'media', NULL, NULL, '2025-12-15 00:51:52', '2025-12-23 00:55:27'),
+(17, 10, 'ejemplo', NULL, '2025-12-15 00:00:00', '2025-12-18 07:42:59', 'completado', 'media', NULL, NULL, '2025-12-15 17:42:30', '2025-12-15 21:31:51'),
+(18, NULL, 'realizar reunion', NULL, '2025-12-15 00:00:00', '2025-12-22 07:43:59', 'completado', 'media', NULL, 16, '2025-12-15 17:43:11', '2025-12-23 18:45:37'),
+(19, 10, 'cambiar nombre actividad a fases', NULL, '2025-12-15 00:00:00', NULL, 'completado', 'media', NULL, NULL, '2025-12-15 19:50:27', '2025-12-15 21:15:00'),
+(20, 10, 'limitar proyecto en el sidebar, que muestre los ultimos 5 proyectos editados', NULL, '2025-12-15 00:00:00', NULL, 'pendiente', 'media', NULL, NULL, '2025-12-15 19:51:20', '2025-12-15 21:31:42'),
+(21, 10, 'cambiar front de actividades, reducir padding', NULL, '2025-12-15 00:00:00', NULL, 'completado', 'media', NULL, NULL, '2025-12-15 19:51:49', '2025-12-15 21:12:05'),
+(22, 10, 'probar paginador', NULL, '2025-12-15 00:00:00', '2025-12-22 17:46:59', 'completado', 'media', NULL, NULL, '2025-12-15 21:25:02', '2025-12-23 00:46:48'),
+(23, 10, 'paginador', NULL, '2025-12-15 00:00:00', NULL, 'completado', 'media', NULL, NULL, '2025-12-15 21:25:25', '2025-12-15 21:25:50'),
+(24, NULL, 'r', NULL, '2025-12-15 00:00:00', NULL, 'completado', 'media', NULL, 16, '2025-12-16 00:50:37', '2025-12-23 18:45:34'),
+(25, 10, 'Prueba Proyectos', NULL, '2025-12-16 00:00:00', '2025-12-22 17:46:59', 'pendiente', 'media', NULL, NULL, '2025-12-16 22:15:14', '2025-12-23 00:46:28'),
+(26, 11, 'prueba', NULL, '2025-12-16 00:00:00', NULL, 'pendiente', 'media', NULL, NULL, '2025-12-16 22:18:19', '2025-12-16 22:18:19'),
+(27, 11, 'r', NULL, '2025-12-16 00:00:00', NULL, 'pendiente', 'media', NULL, NULL, '2025-12-16 22:19:13', '2025-12-16 22:19:13'),
+(28, NULL, 'Hacer dashboard por proyectos creados', NULL, '2025-12-23 14:39:34', NULL, 'pendiente', 'media', NULL, 16, '2025-12-23 19:39:35', '2025-12-23 19:39:35'),
+(29, NULL, 'Generar notificaciones', NULL, '2025-12-23 14:39:49', NULL, 'pendiente', 'media', NULL, 16, '2025-12-23 19:39:49', '2025-12-23 19:39:49'),
+(30, NULL, 'Revisar paddings, margenes y size&#039;s de letras', NULL, '2025-12-23 14:40:09', NULL, 'pendiente', 'media', NULL, 16, '2025-12-23 19:40:09', '2025-12-23 19:40:09'),
+(31, NULL, 'Guardar las evidencias en el bucket', NULL, '2025-12-23 14:40:48', NULL, 'pendiente', 'media', NULL, 16, '2025-12-23 19:40:48', '2025-12-23 19:40:48');
 
 -- --------------------------------------------------------
 
@@ -394,7 +446,20 @@ INSERT INTO `tarea_usuario` (`id`, `tarea_id`, `user_id`, `created_at`, `updated
 (12, 11, 16, '2025-12-14 22:20:18', '2025-12-14 22:20:18'),
 (13, 12, 16, '2025-12-14 22:20:44', '2025-12-14 22:20:44'),
 (15, 14, 16, '2025-12-14 22:21:11', '2025-12-14 22:21:11'),
-(16, 15, 16, '2025-12-14 22:21:42', '2025-12-14 22:21:42');
+(16, 15, 16, '2025-12-14 22:21:42', '2025-12-14 22:21:42'),
+(17, 16, 2, '2025-12-15 00:51:52', '2025-12-15 00:51:52'),
+(18, 17, 16, '2025-12-15 17:42:30', '2025-12-15 17:42:30'),
+(19, 17, 2, '2025-12-15 17:42:30', '2025-12-15 17:42:30'),
+(20, 19, 16, '2025-12-15 19:50:27', '2025-12-15 19:50:27'),
+(21, 20, 16, '2025-12-15 19:51:20', '2025-12-15 19:51:20'),
+(22, 21, 16, '2025-12-15 19:51:49', '2025-12-15 19:51:49'),
+(23, 22, 16, '2025-12-15 21:25:02', '2025-12-15 21:25:02'),
+(24, 23, 2, '2025-12-15 21:25:25', '2025-12-15 21:25:25'),
+(25, 25, 17, '2025-12-16 22:15:14', '2025-12-16 22:15:14'),
+(26, 25, 16, '2025-12-16 22:15:27', '2025-12-16 22:15:27'),
+(27, 25, 2, '2025-12-16 22:15:27', '2025-12-16 22:15:27'),
+(28, 26, 17, '2025-12-16 22:18:19', '2025-12-16 22:18:19'),
+(29, 27, 16, '2025-12-16 22:19:13', '2025-12-16 22:19:13');
 
 -- --------------------------------------------------------
 
@@ -455,7 +520,10 @@ INSERT INTO `trazabilidad` (`id`, `proyecto_id`, `user_id`, `accion`, `detalle`,
 (38, 11, 16, 'Creó el proyecto: Prueba Proyectos', NULL, '2025-12-13 01:44:08'),
 (39, 11, 16, 'Canceló el proyecto: Prueba Proyectos', NULL, '2025-12-13 04:59:29'),
 (40, 10, 16, 'Canceló el proyecto: Terminar Proyecto de Proyectos 🦅🔥', NULL, '2025-12-13 07:01:28'),
-(43, 13, 16, 'Creó el proyecto: Terminar Proyecto de Proyectos 🦅🔥', NULL, '2025-12-13 07:02:48');
+(43, 13, 16, 'Creó el proyecto: Terminar Proyecto de Proyectos 🦅🔥', NULL, '2025-12-13 07:02:48'),
+(44, 13, 2, 'Creó el proyecto: Terminar Proyecto de Proyectos 🦅🔥', NULL, '2025-12-15 01:12:41'),
+(45, 9, 16, 'Creó el proyecto: gestion de proyectos', NULL, '2025-12-16 22:02:01'),
+(46, 13, 16, 'Invitó a Pruebas colaborador al proyecto con rol colaborador', 'Con permisos específicos asignados', '2025-12-16 22:14:44');
 
 -- --------------------------------------------------------
 
@@ -484,8 +552,8 @@ INSERT INTO `users` (`id`, `nombre`, `email`, `password`, `departamento`, `creat
 (10, 'SELECT * FROM users', 'prueba1@gmail.com', 'ca3ef1c21dbddc52879b085668841571b8f0da37da2bffbc47b713a28474450e9ca4681e6b35ce872001d1d50e85ce69294c202218748e787602b477e032acb6', 12, '2025-10-07 17:26:57', '2025-10-26 22:52:46', 'activo'),
 (14, 'prueba de servicio user', 'pruebauser@gmail.com', 'f544d84458f57178aa5ac7c30e6788d05e02569ee731fa7e0607e3879de76042d918265caa1740827a2075f562c15f2866bcecf62ea0194f023e90023c2fd966', 11, '2025-11-09 03:26:43', '2025-11-09 03:26:43', 'activo'),
 (15, 'usuario de pruebas de roles', 'usuario_prueba@gmail.com', '78d01695043d2c2fa35561ab3f4b663aaf8332cac666f0d59124a0ace3b49f4e5f003997c7168c67a5dac2bf68a54c786d91d30763c173edda3c799b3eae4977', 1, '2025-11-09 03:33:39', '2025-11-09 03:34:42', 'activo'),
-(16, 'Jorge Chad mulato', 'jgaleano@colegioprovidencia.edu.co', '0e78f0deb4948191f322583c36dad6c988313669de42d70a01a3d4648ac79ceb4f3b3446b95545b3faf714e678a5cae9f6fb6b16bb95e34da282df973712d24f', 1, '2025-12-11 19:46:42', '2025-12-11 19:47:26', 'activo'),
-(17, 'Pruebas colaborador', 'colaborador@gmail.com', '431268b3dcb8827f6d1121f327a77d6edec501cea363977f98159da9c699d09bbe5928d6847d858095ea04437a4189f30834cd84fafe0398c09e7d239d2daad9', 1, '2025-12-14 18:53:14', '2025-12-14 18:53:14', 'activo');
+(16, 'Jorge Mulato', 'jgaleano@colegioprovidencia.edu.co', '0e78f0deb4948191f322583c36dad6c988313669de42d70a01a3d4648ac79ceb4f3b3446b95545b3faf714e678a5cae9f6fb6b16bb95e34da282df973712d24f', 1, '2025-12-11 19:46:42', '2025-12-15 12:40:04', 'activo'),
+(17, 'Pruebas colaborador', 'colaborador@gmail.com', 'e6b031400886ca12868b361730624eb2feff1ab55a8ca591092e52998958c2e6169ec4616643d08d721a162c6719c79110d8847adefe9addd889d3db69298efb', 1, '2025-12-14 18:53:14', '2025-12-19 12:51:57', 'activo');
 
 -- --------------------------------------------------------
 
@@ -536,7 +604,20 @@ INSERT INTO `user_permiso` (`id`, `user_id`, `permiso_id`, `tipo`) VALUES
 (91, 17, 4, 'allow'),
 (92, 17, 8, 'allow'),
 (93, 17, 9, 'allow'),
-(94, 17, 12, 'allow');
+(94, 17, 12, 'allow'),
+(95, 2, 1, 'allow'),
+(96, 2, 2, 'allow'),
+(97, 2, 3, 'allow'),
+(98, 2, 4, 'allow'),
+(99, 2, 5, 'allow'),
+(100, 2, 6, 'allow'),
+(101, 2, 7, 'allow'),
+(102, 2, 8, 'allow'),
+(103, 2, 9, 'allow'),
+(104, 2, 10, 'allow'),
+(105, 2, 11, 'allow'),
+(106, 2, 12, 'allow'),
+(107, 2, 13, 'allow');
 
 -- --------------------------------------------------------
 
@@ -555,8 +636,6 @@ CREATE TABLE `user_role` (
 --
 
 INSERT INTO `user_role` (`id`, `user_id`, `rol_id`) VALUES
-(3, 2, 1),
-(12, 2, 5),
 (9, 7, 2),
 (22, 10, 1),
 (23, 10, 5),
@@ -612,7 +691,8 @@ ALTER TABLE `permisos`
 --
 ALTER TABLE `proyectos`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `departamento_id` (`departamento_id`);
+  ADD KEY `departamento_id` (`departamento_id`),
+  ADD KEY `fk_proyectos_created_by` (`created_by`);
 
 --
 -- Indices de la tabla `proyecto_user_permiso`
@@ -706,13 +786,13 @@ ALTER TABLE `user_role`
 -- AUTO_INCREMENT de la tabla `actividades`
 --
 ALTER TABLE `actividades`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT de la tabla `comentarios`
 --
 ALTER TABLE `comentarios`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `departamentos`
@@ -724,7 +804,7 @@ ALTER TABLE `departamentos`
 -- AUTO_INCREMENT de la tabla `evidencias`
 --
 ALTER TABLE `evidencias`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `permisos`
@@ -742,13 +822,13 @@ ALTER TABLE `proyectos`
 -- AUTO_INCREMENT de la tabla `proyecto_user_permiso`
 --
 ALTER TABLE `proyecto_user_permiso`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT de la tabla `proyecto_usuario`
 --
 ALTER TABLE `proyecto_usuario`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT de la tabla `roles`
@@ -766,19 +846,19 @@ ALTER TABLE `rol_permiso`
 -- AUTO_INCREMENT de la tabla `tareas`
 --
 ALTER TABLE `tareas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT de la tabla `tarea_usuario`
 --
 ALTER TABLE `tarea_usuario`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- AUTO_INCREMENT de la tabla `trazabilidad`
 --
 ALTER TABLE `trazabilidad`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
 
 --
 -- AUTO_INCREMENT de la tabla `users`
@@ -790,7 +870,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT de la tabla `user_permiso`
 --
 ALTER TABLE `user_permiso`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=95;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=108;
 
 --
 -- AUTO_INCREMENT de la tabla `user_role`
@@ -831,6 +911,7 @@ ALTER TABLE `evidencias`
 -- Filtros para la tabla `proyectos`
 --
 ALTER TABLE `proyectos`
+  ADD CONSTRAINT `fk_proyectos_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `proyectos_ibfk_1` FOREIGN KEY (`departamento_id`) REFERENCES `departamentos` (`id`) ON DELETE SET NULL;
 
 --
