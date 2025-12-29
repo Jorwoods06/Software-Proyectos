@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 27-12-2025 a las 23:01:56
+-- Tiempo de generación: 29-12-2025 a las 04:50:42
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -132,7 +132,31 @@ CREATE TABLE `evidencias` (
 --
 
 INSERT INTO `evidencias` (`id`, `tarea_id`, `archivo`, `tipo`, `created_at`) VALUES
-(1, 4, 'evidencias/tarea_4_informe-de-equipos-localizados-en-el-archivador_1766437377_jigh6jle.docx', 'documento', '2025-12-23 02:02:58');
+(1, 4, 'evidencias/tarea_4_informe-de-equipos-localizados-en-el-archivador_1766437377_jigh6jle.docx', 'documento', '2025-12-23 02:02:58'),
+(7, 4, 'evidencias/tarea_4_software-1-e1550080097569_1766979038_Z36YP1R1.jpg', 'imagen', '2025-12-29 08:30:39');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `notificacion_config`
+--
+
+CREATE TABLE `notificacion_config` (
+  `id` int(11) NOT NULL,
+  `clave` varchar(100) NOT NULL,
+  `valor` varchar(255) NOT NULL,
+  `descripcion` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `notificacion_config`
+--
+
+INSERT INTO `notificacion_config` (`id`, `clave`, `valor`, `descripcion`, `created_at`, `updated_at`) VALUES
+(1, 'horas_antes_vencimiento', '24', 'Horas antes de la fecha de vencimiento para enviar notificación de tarea próxima a vencer', '2025-12-29 01:37:12', '2025-12-29 01:37:12'),
+(2, 'notificar_admin_tareas_vencidas', '1', 'Notificar a administradores cuando hay tareas vencidas (1 = sí, 0 = no)', '2025-12-29 01:37:12', '2025-12-29 01:37:12');
 
 -- --------------------------------------------------------
 
@@ -201,7 +225,8 @@ INSERT INTO `proyectos` (`id`, `nombre`, `descripcion`, `fecha_inicio`, `fecha_f
 (9, 'gestion de proyectos', 'presentacion de proyectos de forma que se pueda realizar seguimiento de las tareas y cumplimiento y revision de tareas', '2025-11-19', '2025-11-30', 'pendiente', '#0DCAF0', 1, 2, '2025-11-19 18:47:09', '2025-12-14 19:44:18'),
 (10, 'Terminar Proyecto de Proyectos 🦅🔥', 'xd', '2025-12-11', '2025-12-31', 'cancelado', '#6610F2', 1, 2, '2025-12-12 01:58:05', '2025-12-14 19:44:18'),
 (11, 'Prueba Proyectos', 'xd', '2025-12-12', '2025-12-20', 'cancelado', '#E83E8C', 1, 16, '2025-12-13 01:44:08', '2025-12-14 19:44:18'),
-(13, 'Terminar Proyecto de Proyectos 🦅🔥', 's', '2025-12-12', '2025-12-31', 'pendiente', '#0DCAF0', 1, 16, '2025-12-13 07:02:48', '2025-12-14 19:44:18');
+(13, 'Terminar Proyecto de Proyectos 🦅🔥', 's', '2025-12-12', '2025-12-31', 'pendiente', '#0DCAF0', 1, 16, '2025-12-13 07:02:48', '2025-12-14 19:44:18'),
+(14, 'prueba usuario sin rol admin', 'ej', '2025-12-28', '2025-12-31', 'pendiente', '#FF6B6B', 1, 17, '2025-12-29 06:01:17', '2025-12-29 06:01:17');
 
 -- --------------------------------------------------------
 
@@ -232,7 +257,23 @@ INSERT INTO `proyecto_user_permiso` (`id`, `proyecto_id`, `user_id`, `permiso_id
 (8, 13, 17, 13, 'allow'),
 (9, 13, 17, 8, 'allow'),
 (10, 13, 17, 4, 'allow'),
-(11, 13, 17, 12, 'allow');
+(11, 13, 17, 12, 'allow'),
+(12, 5, 17, 8, 'allow'),
+(13, 5, 17, 4, 'allow'),
+(14, 5, 17, 12, 'allow'),
+(15, 5, 18, 5, 'allow'),
+(16, 5, 18, 1, 'allow'),
+(17, 5, 18, 9, 'allow'),
+(18, 5, 18, 6, 'allow'),
+(19, 5, 18, 2, 'allow'),
+(20, 5, 18, 10, 'allow'),
+(21, 5, 18, 7, 'allow'),
+(22, 5, 18, 3, 'allow'),
+(23, 5, 18, 11, 'allow'),
+(24, 5, 18, 13, 'allow'),
+(25, 5, 18, 8, 'allow'),
+(26, 5, 18, 4, 'allow'),
+(27, 5, 18, 12, 'allow');
 
 -- --------------------------------------------------------
 
@@ -245,6 +286,9 @@ CREATE TABLE `proyecto_usuario` (
   `proyecto_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `rol_proyecto` enum('lider','colaborador','visor') DEFAULT 'colaborador',
+  `estado_invitacion` enum('pendiente','aceptada','rechazada') NOT NULL DEFAULT 'aceptada',
+  `token_invitacion` varchar(64) DEFAULT NULL,
+  `fecha_invitacion` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -253,19 +297,23 @@ CREATE TABLE `proyecto_usuario` (
 -- Volcado de datos para la tabla `proyecto_usuario`
 --
 
-INSERT INTO `proyecto_usuario` (`id`, `proyecto_id`, `user_id`, `rol_proyecto`, `created_at`, `updated_at`) VALUES
-(2, 3, 2, 'lider', '2025-09-18 04:43:20', '2025-09-18 04:43:20'),
-(3, 4, 2, 'lider', '2025-09-19 19:36:22', '2025-09-19 19:36:22'),
-(4, 5, 7, 'lider', '2025-09-19 21:17:57', '2025-09-19 21:17:57'),
-(5, 6, 2, 'lider', '2025-10-08 17:18:54', '2025-10-08 17:18:54'),
-(6, 7, 2, 'lider', '2025-10-08 17:30:36', '2025-10-08 17:30:36'),
-(7, 8, 2, 'lider', '2025-10-28 18:05:17', '2025-10-28 18:05:17'),
-(8, 9, 2, 'lider', '2025-11-19 18:47:09', '2025-11-19 18:47:09'),
-(9, 10, 2, 'lider', '2025-12-12 01:58:06', '2025-12-12 01:58:06'),
-(10, 11, 16, 'lider', '2025-12-13 01:44:08', '2025-12-13 01:44:08'),
-(12, 13, 16, 'lider', '2025-12-13 07:02:48', '2025-12-13 07:02:48'),
-(13, 13, 2, 'colaborador', '2025-12-13 07:02:48', '2025-12-13 07:02:48'),
-(14, 13, 17, 'colaborador', '2025-12-16 22:14:44', '2025-12-16 22:14:44');
+INSERT INTO `proyecto_usuario` (`id`, `proyecto_id`, `user_id`, `rol_proyecto`, `estado_invitacion`, `token_invitacion`, `fecha_invitacion`, `created_at`, `updated_at`) VALUES
+(2, 3, 2, 'lider', 'aceptada', NULL, NULL, '2025-09-18 04:43:20', '2025-09-18 04:43:20'),
+(3, 4, 2, 'lider', 'aceptada', NULL, NULL, '2025-09-19 19:36:22', '2025-09-19 19:36:22'),
+(4, 5, 7, 'lider', 'aceptada', NULL, NULL, '2025-09-19 21:17:57', '2025-09-19 21:17:57'),
+(5, 6, 2, 'lider', 'aceptada', NULL, NULL, '2025-10-08 17:18:54', '2025-10-08 17:18:54'),
+(6, 7, 2, 'lider', 'aceptada', NULL, NULL, '2025-10-08 17:30:36', '2025-10-08 17:30:36'),
+(7, 8, 2, 'lider', 'aceptada', NULL, NULL, '2025-10-28 18:05:17', '2025-10-28 18:05:17'),
+(8, 9, 2, 'lider', 'aceptada', NULL, NULL, '2025-11-19 18:47:09', '2025-11-19 18:47:09'),
+(9, 10, 2, 'lider', 'aceptada', NULL, NULL, '2025-12-12 01:58:06', '2025-12-12 01:58:06'),
+(10, 11, 16, 'lider', 'aceptada', NULL, NULL, '2025-12-13 01:44:08', '2025-12-13 01:44:08'),
+(12, 13, 16, 'lider', 'aceptada', NULL, NULL, '2025-12-13 07:02:48', '2025-12-13 07:02:48'),
+(13, 13, 2, 'colaborador', 'aceptada', NULL, NULL, '2025-12-13 07:02:48', '2025-12-13 07:02:48'),
+(14, 13, 17, 'colaborador', 'aceptada', NULL, NULL, '2025-12-16 22:14:44', '2025-12-16 22:14:44'),
+(15, 14, 17, 'lider', 'aceptada', NULL, NULL, '2025-12-29 06:01:17', '2025-12-29 06:01:17'),
+(16, 5, 17, 'colaborador', 'aceptada', NULL, NULL, '2025-12-29 06:17:05', '2025-12-29 06:17:05'),
+(17, 5, 18, 'colaborador', 'pendiente', 'c8be7ca7185b8128e7432d5376616e5ba8a55652fb7e1db6841b0343fffca45a', '2025-12-29 06:45:58', '2025-12-29 06:45:58', '2025-12-29 06:45:58'),
+(18, 13, 18, 'colaborador', 'aceptada', '8144c31481112c506f94873545c702a7a49d6e1a74d21534203103984f3a1b8f', '2025-12-29 06:56:02', '2025-12-29 06:56:02', '2025-12-29 06:59:10');
 
 -- --------------------------------------------------------
 
@@ -408,10 +456,10 @@ INSERT INTO `tareas` (`id`, `actividad_id`, `nombre`, `descripcion`, `fecha_inic
 (25, 10, 'Prueba Proyectos', NULL, '2025-12-16 00:00:00', '2025-12-22 17:46:59', 'pendiente', 'media', NULL, NULL, '2025-12-16 22:15:14', '2025-12-23 00:46:28'),
 (26, 11, 'prueba', NULL, '2025-12-16 00:00:00', NULL, 'pendiente', 'media', NULL, NULL, '2025-12-16 22:18:19', '2025-12-16 22:18:19'),
 (27, 11, 'r', NULL, '2025-12-16 00:00:00', NULL, 'pendiente', 'media', NULL, NULL, '2025-12-16 22:19:13', '2025-12-16 22:19:13'),
-(28, NULL, 'Hacer dashboard por proyectos creados', NULL, '2025-12-23 14:39:34', NULL, 'pendiente', 'media', NULL, 16, '2025-12-23 19:39:35', '2025-12-23 19:39:35'),
-(29, NULL, 'Generar notificaciones', NULL, '2025-12-23 14:39:49', NULL, 'pendiente', 'media', NULL, 16, '2025-12-23 19:39:49', '2025-12-23 19:39:49'),
+(28, NULL, 'Hacer dashboard por proyectos creados', NULL, '2025-12-23 14:39:34', NULL, 'completado', 'media', NULL, 16, '2025-12-23 19:39:35', '2025-12-28 05:56:14'),
+(29, NULL, 'Generar notificaciones', NULL, '2025-12-23 14:39:49', NULL, 'completado', 'media', NULL, 16, '2025-12-23 19:39:49', '2025-12-29 06:59:31'),
 (30, NULL, 'Revisar paddings, margenes y size&#039;s de letras', NULL, '2025-12-23 14:40:09', NULL, 'pendiente', 'media', NULL, 16, '2025-12-23 19:40:09', '2025-12-23 19:40:09'),
-(31, NULL, 'Guardar las evidencias en el bucket', NULL, '2025-12-23 14:40:48', NULL, 'pendiente', 'media', NULL, 16, '2025-12-23 19:40:48', '2025-12-23 19:40:48');
+(31, NULL, 'Guardar las evidencias en el bucket', NULL, '2025-12-23 14:40:48', NULL, 'completado', 'media', NULL, 16, '2025-12-23 19:40:48', '2025-12-29 08:31:09');
 
 -- --------------------------------------------------------
 
@@ -523,7 +571,12 @@ INSERT INTO `trazabilidad` (`id`, `proyecto_id`, `user_id`, `accion`, `detalle`,
 (43, 13, 16, 'Creó el proyecto: Terminar Proyecto de Proyectos 🦅🔥', NULL, '2025-12-13 07:02:48'),
 (44, 13, 2, 'Creó el proyecto: Terminar Proyecto de Proyectos 🦅🔥', NULL, '2025-12-15 01:12:41'),
 (45, 9, 16, 'Creó el proyecto: gestion de proyectos', NULL, '2025-12-16 22:02:01'),
-(46, 13, 16, 'Invitó a Pruebas colaborador al proyecto con rol colaborador', 'Con permisos específicos asignados', '2025-12-16 22:14:44');
+(46, 13, 16, 'Invitó a Pruebas colaborador al proyecto con rol colaborador', 'Con permisos específicos asignados', '2025-12-16 22:14:44'),
+(47, 14, 17, 'Creó el proyecto: prueba usuario sin rol admin', NULL, '2025-12-29 06:01:17'),
+(48, 5, 16, 'Invitó a Pruebas colaborador al proyecto con rol colaborador', 'Con permisos específicos asignados', '2025-12-29 06:17:05'),
+(49, 5, 16, 'Invitó a Jorge jr al proyecto con rol colaborador', 'Con permisos específicos asignados', '2025-12-29 06:46:00'),
+(50, 13, 16, 'Invitó a Jorge jr al proyecto con rol colaborador', NULL, '2025-12-29 06:56:05'),
+(51, 13, 18, 'Aceptó la invitación al proyecto: Terminar Proyecto de Proyectos 🦅🔥', NULL, '2025-12-29 06:59:10');
 
 -- --------------------------------------------------------
 
@@ -553,7 +606,8 @@ INSERT INTO `users` (`id`, `nombre`, `email`, `password`, `departamento`, `creat
 (14, 'prueba de servicio user', 'pruebauser@gmail.com', 'f544d84458f57178aa5ac7c30e6788d05e02569ee731fa7e0607e3879de76042d918265caa1740827a2075f562c15f2866bcecf62ea0194f023e90023c2fd966', 11, '2025-11-09 03:26:43', '2025-11-09 03:26:43', 'activo'),
 (15, 'usuario de pruebas de roles', 'usuario_prueba@gmail.com', '78d01695043d2c2fa35561ab3f4b663aaf8332cac666f0d59124a0ace3b49f4e5f003997c7168c67a5dac2bf68a54c786d91d30763c173edda3c799b3eae4977', 1, '2025-11-09 03:33:39', '2025-11-09 03:34:42', 'activo'),
 (16, 'Jorge Mulato', 'jgaleano@colegioprovidencia.edu.co', '0e78f0deb4948191f322583c36dad6c988313669de42d70a01a3d4648ac79ceb4f3b3446b95545b3faf714e678a5cae9f6fb6b16bb95e34da282df973712d24f', 1, '2025-12-11 19:46:42', '2025-12-15 12:40:04', 'activo'),
-(17, 'Pruebas colaborador', 'colaborador@gmail.com', 'e6b031400886ca12868b361730624eb2feff1ab55a8ca591092e52998958c2e6169ec4616643d08d721a162c6719c79110d8847adefe9addd889d3db69298efb', 1, '2025-12-14 18:53:14', '2025-12-19 12:51:57', 'activo');
+(17, 'Pruebas colaborador', 'colaborador@gmail.com', '0e78f0deb4948191f322583c36dad6c988313669de42d70a01a3d4648ac79ceb4f3b3446b95545b3faf714e678a5cae9f6fb6b16bb95e34da282df973712d24f', 1, '2025-12-14 18:53:14', '2025-12-29 00:42:08', 'activo'),
+(18, 'Jorge jr', 'dg244049@gmail.com', '0e78f0deb4948191f322583c36dad6c988313669de42d70a01a3d4648ac79ceb4f3b3446b95545b3faf714e678a5cae9f6fb6b16bb95e34da282df973712d24f', 4, '2025-12-29 01:44:04', '2025-12-29 01:44:28', 'activo');
 
 -- --------------------------------------------------------
 
@@ -617,7 +671,20 @@ INSERT INTO `user_permiso` (`id`, `user_id`, `permiso_id`, `tipo`) VALUES
 (104, 2, 10, 'allow'),
 (105, 2, 11, 'allow'),
 (106, 2, 12, 'allow'),
-(107, 2, 13, 'allow');
+(107, 2, 13, 'allow'),
+(108, 17, 1, 'allow'),
+(109, 17, 2, 'allow'),
+(110, 17, 3, 'allow'),
+(111, 17, 5, 'allow'),
+(112, 17, 6, 'allow'),
+(113, 17, 7, 'allow'),
+(114, 17, 10, 'allow'),
+(115, 17, 11, 'allow'),
+(116, 17, 13, 'allow'),
+(117, 18, 4, 'allow'),
+(118, 18, 8, 'allow'),
+(119, 18, 9, 'allow'),
+(120, 18, 12, 'allow');
 
 -- --------------------------------------------------------
 
@@ -644,7 +711,8 @@ INSERT INTO `user_role` (`id`, `user_id`, `rol_id`) VALUES
 (26, 16, 1),
 (27, 16, 5),
 (28, 17, 3),
-(29, 17, 4);
+(29, 17, 4),
+(30, 18, 3);
 
 --
 -- Índices para tablas volcadas
@@ -680,6 +748,14 @@ ALTER TABLE `evidencias`
   ADD KEY `tarea_id` (`tarea_id`);
 
 --
+-- Indices de la tabla `notificacion_config`
+--
+ALTER TABLE `notificacion_config`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `clave` (`clave`),
+  ADD UNIQUE KEY `clave_unique` (`clave`);
+
+--
 -- Indices de la tabla `permisos`
 --
 ALTER TABLE `permisos`
@@ -709,6 +785,7 @@ ALTER TABLE `proyecto_user_permiso`
 --
 ALTER TABLE `proyecto_usuario`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `token_invitacion` (`token_invitacion`),
   ADD KEY `proyecto_id` (`proyecto_id`),
   ADD KEY `user_id` (`user_id`);
 
@@ -804,7 +881,13 @@ ALTER TABLE `departamentos`
 -- AUTO_INCREMENT de la tabla `evidencias`
 --
 ALTER TABLE `evidencias`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
+-- AUTO_INCREMENT de la tabla `notificacion_config`
+--
+ALTER TABLE `notificacion_config`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `permisos`
@@ -816,19 +899,19 @@ ALTER TABLE `permisos`
 -- AUTO_INCREMENT de la tabla `proyectos`
 --
 ALTER TABLE `proyectos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT de la tabla `proyecto_user_permiso`
 --
 ALTER TABLE `proyecto_user_permiso`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT de la tabla `proyecto_usuario`
 --
 ALTER TABLE `proyecto_usuario`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT de la tabla `roles`
@@ -858,25 +941,25 @@ ALTER TABLE `tarea_usuario`
 -- AUTO_INCREMENT de la tabla `trazabilidad`
 --
 ALTER TABLE `trazabilidad`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=52;
 
 --
 -- AUTO_INCREMENT de la tabla `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT de la tabla `user_permiso`
 --
 ALTER TABLE `user_permiso`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=108;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=121;
 
 --
 -- AUTO_INCREMENT de la tabla `user_role`
 --
 ALTER TABLE `user_role`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- Restricciones para tablas volcadas
