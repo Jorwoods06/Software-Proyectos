@@ -7,6 +7,7 @@ use App\Models\Actividad;
 use App\Models\Proyecto;
 use App\Models\User;
 use App\Models\Comentario;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class TareaController extends Controller
@@ -47,7 +48,13 @@ class TareaController extends Controller
 
             // Preparar datos para la tarea usando método del modelo
             $tareaData = Tarea::prepararDatosCreacion($data, session('user_id'));
-            Tarea::crearConUsuarios($tareaData, $data['usuarios'] ?? null);
+            $tarea = Tarea::crearConUsuarios($tareaData, $data['usuarios'] ?? null);
+            
+            // Enviar notificaciones a usuarios asignados
+            if (!empty($data['usuarios']) && $tarea) {
+                $notificationService = new NotificationService();
+                $notificationService->notificarUsuariosAsignados($tarea, 'asignada');
+            }
             
             return back()->with('success', 'Tarea creada correctamente.');
         } catch (\Exception $e) {
@@ -83,9 +90,30 @@ class TareaController extends Controller
         ]);
 
         try {
+            // Obtener usuarios asignados antes de actualizar
+            $usuariosAnteriores = $tarea->usuariosAsignados->pluck('id')->toArray();
+            
             // Preparar datos usando método del modelo
             $data = $tarea->prepararDatosActualizacion($data);
             $tarea->actualizarConUsuarios($data, $data['usuarios'] ?? null);
+            
+            // Recargar la tarea para obtener los nuevos usuarios asignados
+            $tarea->refresh();
+            $usuariosNuevos = $tarea->usuariosAsignados->pluck('id')->toArray();
+            
+            // Enviar notificaciones solo a usuarios nuevos
+            if (!empty($data['usuarios'])) {
+                $usuariosParaNotificar = array_diff($usuariosNuevos, $usuariosAnteriores);
+                if (!empty($usuariosParaNotificar)) {
+                    $notificationService = new NotificationService();
+                    foreach ($usuariosParaNotificar as $userId) {
+                        $usuario = User::find($userId);
+                        if ($usuario) {
+                            $notificationService->enviarTareaAsignada($tarea, $usuario);
+                        }
+                    }
+                }
+            }
             
             return back()->with('success', 'Tarea actualizada correctamente.');
         } catch (\Exception $e) {

@@ -987,6 +987,10 @@
                 <i class="bi bi-arrow-left"></i>
                 <span class="d-none d-md-inline">Proyectos</span>
             </a>
+            <button type="button" class="btn-action btn-colaboradores" data-bs-toggle="modal" data-bs-target="#modalColaboradores">
+                <i class="bi bi-people"></i>
+          
+            </button>
            
             @permiso('crear actividades')
             <button type="button" class="btn-action btn-add-activity" data-bs-toggle="modal" data-bs-target="#modalCrearActividad">
@@ -2534,22 +2538,66 @@ function mostrarEvidenciasTarea(evidencias) {
         evidenciaDiv.dataset.evidenciaId = evidencia.id;
         
         let contenidoEvidencia = '';
+        // Usar url_directa si existe (para imágenes y PDFs), sino usar url (endpoint download)
+        const urlDirecta = evidencia.url_directa || null;
+        const urlEnlace = evidencia.url;
+        const esVisualizable = evidencia.es_visualizable || false;
+        
         if (evidencia.es_imagen) {
-            contenidoEvidencia = `
-                <div class="mb-2">
-                    <img src="${escapeHtml(evidencia.url)}" alt="${escapeHtml(evidencia.nombre_archivo)}" 
-                         style="max-width: 100%; max-height: 200px; border-radius: 4px; cursor: pointer;"
-                         onclick="window.open('${escapeHtml(evidencia.url)}', '_blank')">
-                </div>
-            `;
+            // Para imágenes, usar url_directa directamente en el src (como technical-report-bigbag)
+            // Solo mostrar imagen si tenemos url_directa válida
+            if (urlDirecta) {
+                contenidoEvidencia = `
+                    <div class="mb-2">
+                        <img src="${escapeHtml(urlDirecta)}" alt="${escapeHtml(evidencia.nombre_archivo)}" 
+                             style="max-width: 100%; max-height: 200px; border-radius: 4px; cursor: pointer;"
+                             onclick="window.open('${escapeHtml(urlDirecta)}', '_blank')"
+                             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'200\\' height=\\'200\\'%3E%3Ctext x=\\'50%25\\' y=\\'50%25\\' text-anchor=\\'middle\\' dy=\\'.3em\\'%3EImagen no disponible%3C/text%3E%3C/svg%3E'">
+                    </div>
+                `;
+            } else {
+                contenidoEvidencia = `
+                    <div class="mb-2">
+                        <p class="text-muted">Imagen no disponible</p>
+                    </div>
+                `;
+            }
         } else {
             contenidoEvidencia = `
                 <div>
                     <i class="bi ${evidencia.icono}"></i> 
-                    <a href="${escapeHtml(evidencia.url)}" target="_blank" class="text-decoration-none">
+                    <span class="text-decoration-none">
                         ${escapeHtml(evidencia.nombre_archivo)}
-                    </a>
+                    </span>
                 </div>
+            `;
+        }
+        
+        // Determinar qué botón mostrar según si es visualizable o no
+        let botonAccion = '';
+        if (esVisualizable && urlDirecta) {
+            // Para imágenes y PDFs: botón "Ver" (solo si tenemos url_directa)
+            botonAccion = `
+                <a href="${escapeHtml(urlDirecta)}" target="_blank" 
+                   class="btn btn-sm btn-outline-primary" title="Ver">
+                    <i class="bi bi-eye"></i> Ver
+                </a>
+            `;
+        } else if (esVisualizable) {
+            // Si es visualizable pero no hay url_directa, usar el endpoint download
+            botonAccion = `
+                <a href="${escapeHtml(urlEnlace)}" target="_blank" 
+                   class="btn btn-sm btn-outline-primary" title="Ver">
+                    <i class="bi bi-eye"></i> Ver
+                </a>
+            `;
+        } else {
+            // Para Word, Excel, etc.: botón "Descargar"
+            botonAccion = `
+                <a href="${escapeHtml(urlEnlace)}" download="${escapeHtml(evidencia.nombre_archivo)}"
+                   class="btn btn-sm btn-outline-success" title="Descargar">
+                    <i class="bi bi-download"></i> Descargar
+                </a>
             `;
         }
         
@@ -2559,10 +2607,7 @@ function mostrarEvidenciasTarea(evidencias) {
             </div>
             ${contenidoEvidencia}
             <div class="evidencia-acciones">
-                <a href="${escapeHtml(evidencia.url)}" target="_blank" 
-                   class="btn btn-sm btn-outline-primary" title="Ver">
-                    <i class="bi bi-eye"></i> Ver
-                </a>
+                ${botonAccion}
                 <button type="button" 
                         class="btn btn-sm btn-outline-danger" 
                         onclick="eliminarEvidenciaTarea(${evidencia.id})"

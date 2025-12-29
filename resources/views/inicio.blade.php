@@ -1300,11 +1300,8 @@
                 </div>
                 @endif
             </div>
-        </div>
-        @endpermiso
-    </div>
 
-    {{-- Sección: Proyectos --}}
+             {{-- Sección: Proyectos --}}
     <div class="section-card dashboard-grid-full">
         <h2 class="section-title">
             <i class="bi bi-folder"></i>
@@ -1338,6 +1335,11 @@
         </div>
         @endif
     </div>
+        </div>
+        @endpermiso
+    </div>
+
+   
 </div>
 
 <script>

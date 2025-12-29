@@ -12,6 +12,7 @@ use App\Http\Controllers\TareaController; // Controlador de gestion de tareas de
 use App\Http\Controllers\EvidenciaController; // Controlador de gestion de evidencias dentro de tareas de las actividades de los proyectos
 use App\Http\Controllers\ProyectoController; // Controlador de gestion de proyectos
 use App\Http\Controllers\ProyectoMetricaController; // Controlador de metricas de proyectos
+use App\Http\Controllers\InvitacionController; // Controlador de invitaciones a proyectos
 // Llamado de los Middleware
 use App\Http\Middleware\CheckPermission; // Revision de permisos  
 use App\Http\Middleware\JwtMiddleware; // Validacion de token JWT
@@ -100,6 +101,13 @@ Route::middleware([JwtMiddleware::class, SanitizeInput::class])->group(function 
         Route::post('/{id}/invitar', [ProyectoController::class, 'invitarUsuario'])
             ->middleware([CheckPermission::class . ':invitar usuarios a este proyecto'])
             ->name('proyectos.invitar');
+
+        // Aceptar/Rechazar invitaciones
+        Route::get('/invitaciones/aceptar/{token}', [InvitacionController::class, 'aceptar'])
+            ->name('proyectos.invitaciones.aceptar');
+        
+        Route::get('/invitaciones/rechazar/{token}', [InvitacionController::class, 'rechazar'])
+            ->name('proyectos.invitaciones.rechazar');
 
         // Asignar permisos específicos a un usuario dentro del proyecto
         Route::post('/{id}/permisos', [ProyectoController::class, 'asignarPermisoProyecto'])
@@ -197,6 +205,14 @@ Route::middleware([JwtMiddleware::class, SanitizeInput::class])->group(function 
         Route::get('/{id}/evidencias', [EvidenciaController::class, 'index'])
             ->middleware([CheckPermission::class . ':ver tarea'])
             ->name('tareas.evidencias.index');
+
+        Route::get('/{tareaId}/evidencias/{evidenciaId}', [EvidenciaController::class, 'show'])
+            ->middleware([CheckPermission::class . ':ver tarea'])
+            ->name('tareas.evidencias.show');
+
+        Route::get('/{tareaId}/evidencias/{evidenciaId}/download', [EvidenciaController::class, 'download'])
+            ->middleware([CheckPermission::class . ':ver tarea'])
+            ->name('tareas.evidencias.download');
 
         Route::delete('/{tareaId}/evidencias/{evidenciaId}', [EvidenciaController::class, 'destroy'])
             ->middleware([CheckPermission::class . ':editar tarea'])

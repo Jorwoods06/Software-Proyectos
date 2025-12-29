@@ -18,6 +18,16 @@ class ActividadController extends Controller
             return back()->with('error', 'Proyecto no encontrado.');
         }
 
+        // Verificar que el usuario tenga acceso al proyecto
+        $auth_user = User::with('roles')->find(session('user_id'));
+        if (!$auth_user) {
+            return redirect()->route('login');
+        }
+
+        if (!$proyecto->usuarioTieneAcceso($auth_user)) {
+            abort(403, 'No tienes acceso a este proyecto.');
+        }
+
         $actividades = Actividad::obtenerConTareasPorProyecto($proyectoId);
         $colaboradores = $proyecto->colaboradores;
 

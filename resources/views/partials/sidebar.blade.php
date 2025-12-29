@@ -522,16 +522,24 @@ $auth_user = \App\Models\User::with('roles')
 // Obtener proyectos del usuario autenticado
 $proyectos = collect([]);
 if ($auth_user) {
-$proyectos = \App\Models\Proyecto::where('estado', '!=', 'cancelado')
-->where(function ($query) use ($auth_user) {
-$query
-->where('departamento_id', $auth_user->departamento)
-->orWhereHas('usuarios', function ($q) use ($auth_user) {
-$q->where('users.id', $auth_user->id);
-});
-})
-->orderBy('nombre')
-->get();
+    // Verificar si el usuario es Administrador o TI (pueden ver todos los proyectos)
+    $esAdmin = $auth_user->hasRole('Administrador') || $auth_user->hasRole('admin') || $auth_user->hasRole('TI');
+    
+    $query = \App\Models\Proyecto::where('estado', '!=', 'cancelado');
+    
+    // Si es administrador, puede ver todos los proyectos
+    if (!$esAdmin) {
+        $query->where(function ($query) use ($auth_user) {
+            // El usuario es el creador del proyecto
+            $query->where('created_by', $auth_user->id)
+                  // O el usuario está explícitamente asignado como colaborador en proyecto_usuario
+                  ->orWhereHas('colaboradores', function ($q) use ($auth_user) {
+                      $q->where('users.id', $auth_user->id);
+                  });
+        });
+    }
+    
+    $proyectos = $query->orderBy('nombre')->get();
 }
 
 // Determinar si el submenú de proyectos debe estar abierto

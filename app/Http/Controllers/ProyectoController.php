@@ -9,6 +9,7 @@ use App\Models\Departamentos;
 use App\Models\ProyectoUsuario;
 use App\Models\ProyectoUserPermiso;
 use App\Models\Trazabilidad;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
@@ -225,7 +226,7 @@ public function update(Request $request, $id)
 
 
 
-    // Invitar usuario a proyecto (ya existente, con validación extra)
+    // Invitar usuario a proyecto (con sistema de invitaciones)
    public function invitarUsuario(Request $request, $proyectoId)
 {
     $data = $request->validate([
@@ -238,31 +239,30 @@ public function update(Request $request, $id)
 
     $proyecto = Proyecto::findOrFail($proyectoId);
     $usuarioInvitador = User::find(session('user_id'));
+    $notificationService = new NotificationService();
     
     try {
         DB::beginTransaction();
         
         foreach ($data['usuarios'] as $usuarioData) {
-            // Verificar si ya existe en el proyecto
-            $existeEnProyecto = DB::table('proyecto_usuario')
-                ->where('proyecto_id', $proyectoId)
+            // Verificar si ya existe en el proyecto (aceptada o pendiente)
+            $existeEnProyecto = ProyectoUsuario::where('proyecto_id', $proyectoId)
                 ->where('user_id', $usuarioData['user_id'])
+                ->whereIn('estado_invitacion', ['aceptada', 'pendiente'])
                 ->exists();
             
             if ($existeEnProyecto) {
                 continue;
             }
             
-            // Invitar al usuario al proyecto
-            DB::table('proyecto_usuario')->insert([
-                'proyecto_id' => $proyectoId,
-                'user_id' => $usuarioData['user_id'],
-                'rol_proyecto' => $usuarioData['rol_proyecto'],
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
+            // Crear invitación pendiente
+            $invitacion = ProyectoUsuario::crearInvitacion(
+                $proyectoId,
+                $usuarioData['user_id'],
+                $usuarioData['rol_proyecto']
+            );
             
-            // Asignar permisos específicos si se proporcionaron
+            // Guardar permisos para cuando acepte la invitación
             if (!empty($usuarioData['permisos'])) {
                 foreach ($usuarioData['permisos'] as $permisoId) {
                     DB::table('proyecto_user_permiso')->updateOrInsert([
@@ -275,8 +275,18 @@ public function update(Request $request, $id)
                 }
             }
             
-            // Registrar trazabilidad
+            // Enviar correo de invitación
             $usuarioInvitado = User::find($usuarioData['user_id']);
+            if ($usuarioInvitado) {
+                $notificationService->enviarInvitacionProyecto(
+                    $proyecto,
+                    $usuarioInvitado,
+                    $invitacion->token_invitacion,
+                    $usuarioData['rol_proyecto']
+                );
+            }
+            
+            // Registrar trazabilidad
             if ($usuarioInvitador && $usuarioInvitado) {
                 Trazabilidad::create([
                     'proyecto_id' => $proyectoId,
@@ -292,7 +302,7 @@ public function update(Request $request, $id)
         
         return response()->json([
             'success' => true,
-            'message' => 'Usuarios invitados correctamente al proyecto.'
+            'message' => 'Invitaciones enviadas correctamente.'
         ]);
         
     } catch (\Exception $e) {
@@ -300,7 +310,7 @@ public function update(Request $request, $id)
         
         return response()->json([
             'success' => false,
-            'message' => 'Error al invitar usuarios: ' . $e->getMessage()
+            'message' => 'Error al enviar invitaciones: ' . $e->getMessage()
         ], 500);
     }
 }

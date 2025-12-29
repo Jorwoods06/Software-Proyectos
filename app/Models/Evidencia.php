@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class Evidencia extends Model
 {
@@ -98,5 +100,31 @@ class Evidencia extends Model
         return DB::table('evidencias')
             ->where('id', $evidenciaId)
             ->exists();
+    }
+
+    /**
+     * Obtener URL temporal firmada desde S3
+     * @param string $rutaArchivo Ruta del archivo en S3
+     * @param int $minutos Minutos de validez de la URL (default: 60)
+     * @return string|null URL temporal o null si hay error
+     */
+    public static function obtenerUrlTemporal(string $rutaArchivo, int $minutos = 60): ?string
+    {
+        try {
+            // Verificar que la ruta no esté vacía
+            if (empty($rutaArchivo)) {
+                Log::error('Ruta de archivo vacía al obtener URL temporal');
+                return null;
+            }
+            
+            // Generar URL temporal directamente (sin verificar existencia)
+            // La verificación de existencia puede fallar si hay problemas de configuración
+            // pero la URL temporal puede generarse igualmente
+            return Storage::disk('s3')->temporaryUrl($rutaArchivo, now()->addMinutes($minutos));
+        } catch (\Exception $e) {
+            // Si hay error al generar URL, retornar null
+            Log::error('Error obteniendo URL temporal de evidencia: ' . $e->getMessage() . ' - Ruta: ' . $rutaArchivo);
+            return null;
+        }
     }
 }

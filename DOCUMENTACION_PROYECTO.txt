@@ -1,0 +1,768 @@
+================================================================================
+                    DOCUMENTACIÓN COMPLETA DEL PROYECTO
+                    Sistema de Gestión de Proyectos
+================================================================================
+
+Fecha de Documentación: Diciembre 2025
+Versión del Sistema: 1.0
+Framework: Laravel 12.0
+PHP: 8.2+
+
+================================================================================
+1. OBJETIVO DEL PROYECTO
+================================================================================
+
+Este sistema es una plataforma web completa para la gestión de proyectos, 
+actividades y tareas dentro de una organización. Permite a los equipos 
+colaborar de manera eficiente, gestionar permisos granulares, realizar 
+seguimiento de avances, almacenar evidencias de trabajo y mantener un 
+historial completo de cambios (trazabilidad).
+
+El sistema está diseñado para:
+- Centralizar la gestión de múltiples proyectos simultáneos
+- Facilitar la colaboración entre equipos y departamentos
+- Implementar controles de acceso basados en roles y permisos
+- Registrar y almacenar evidencias del trabajo realizado
+- Proporcionar métricas e indicadores de rendimiento
+- Mantener un registro completo de todas las acciones realizadas
+
+================================================================================
+2. ALCANCE DEL PROYECTO
+================================================================================
+
+2.1 ALынCE FUNCIONAL
+--------------------
+- Gestión completa de proyectos con asignación de fechas, estados y colores
+- Gestión de actividades dentro de proyectos
+- Gestión de tareas dentro de actividades
+- Sistema de evidencias asociadas a tareas (imágenes, PDFs, documentos)
+- Sistema de roles y permisos granular (globales y por proyecto)
+- Sistema de invitaciones a proyectos
+- Dashboard con métricas y KPIs
+- Sistema de notificaciones por correo electrónico
+- Sistema de comentarios en tareas
+- Calendario de tareas
+- Trazabilidad de acciones (auditoría)
+- Sistema de asignación de responsables a tareas
+
+2.2 ALcANCE TECNOLÓGICO
+------------------------
+- Backend: Laravel 12.0 (PHP 8.2+)
+- Base de datos: MySQL/MariaDB
+- Almacenamiento de archivos: AWS S3
+- Autenticación: JWT (JSON Web Tokens)
+- Frontend: Blade Templates + JavaScript/Vanilla JS
+- Framework CSS: Bootstrap
+- Servidor de correo: SMTP (configurable: Gmail, otros)
+- Dependencias principales:
+  * firebase/php-jwt: Autenticación JWT
+  * league/flysystem-aws-s3-v3: Integración con AWS S3
+
+================================================================================
+3. ARQUITECTURA Y ESTRUCTURA DEL SISTEMA
+================================================================================
+
+3.1 ESTRUCTURA DE MÓDULOS
+--------------------------
+El sistema está organizado en los siguientes módulos principales:
+
+1. Módulo de Autenticación y Usuarios
+2. Módulo de Gestión de Proyectos
+3. Módulo de Actividades
+4. Módulo de Tareas
+5. Módulo de Evidencias
+6. Módulo de Permisos y Roles
+7. Módulo de Invitaciones
+8. Módulo de Métricas y Dashboard
+9. Módulo de Notificaciones
+10. Módulo de Trazabilidad
+
+3.2 JERARQUÍA DE DATOS
+-----------------------
+Proyecto
+  └── Actividades
+      └── Tareas
+          └── Evidencias
+          └── Comentarios
+  └── Usuarios (colaboradores)
+  └── Permisos específicos
+  └── Métricas
+  └── Trazabilidad
+
+3.3 RELACIONES ENTRE ENTIDADES
+-------------------------------
+- Un Proyecto tiene muchas Actividades
+- Una Actividad tiene muchas Tareas
+- Una Tarea tiene muchas Evidencias
+- Una Tarea tiene muchos Comentarios
+- Un Proyecto tiene muchos Usuarios (muchos a muchos con rol)
+- Un Usuario tiene muchos Roles
+- Un Rol tiene muchos Permisos
+- Un Usuario puede tener Permisos específicos por Proyecto
+
+================================================================================
+4. FUNCIONALIDADES PRINCIPALES
+================================================================================
+
+4.1 GESTIÓN DE PROYECTOS
+-------------------------
+Funcionalidades:
+- Crear, editar, eliminar y listar proyectos
+- Asignar fechas de inicio y fin
+- Asignar estado (activo, finalizado, etc.)
+- Asignar departamento
+- Asignar color identificativo (automático o manual)
+- Registrar usuario creador del proyecto
+- Invitar usuarios a proyectos
+- Asignar permisos específicos a usuarios por proyecto
+- Ver trazabilidad (historial de acciones)
+
+Permisos requeridos:
+- Ver proyecto
+- Crear proyecto
+- Editar proyecto
+- Eliminar proyecto
+- Invitar usuarios a este proyecto
+- Asignar permisos proyecto
+
+4.2 GESTIÓN DE ACTIVIDADES
+---------------------------
+Funcionalidades:
+- Crear, editar, eliminar y listar actividades
+- Asignar fechas de inicio y fin (con hora de fin opcional)
+- Asignar estado
+- Vincular actividades a un proyecto
+- Soft delete (eliminación lógica)
+
+Permisos requeridos:
+- Ver actividades
+- Crear actividades
+- Editar actividades
+- Eliminar actividades
+
+4.3 GESTIÓN DE TAREAS
+----------------------
+Funcionalidades:
+- Crear, editar, eliminar y listar tareas
+- Asignar fechas de inicio y fin
+- Asignar estado (pendiente, en progreso, completada, etc.)
+- Asignar prioridad
+- Asignar responsable(s)
+- Tareas independientes (sin actividad asociada)
+- Editar descripción de tareas
+- Sistema de comentarios en tareas
+- Toggle de estado (completada/pendiente)
+- Toggle estado pendiente/en progreso
+- Actualizar fecha de tarea
+- Soft delete (eliminación lógica)
+
+Permisos requeridos:
+- Ver tarea
+- Crear tarea
+- Editar tarea
+- Eliminar tarea
+
+4.4 GESTIÓN DE EVIDENCIAS
+--------------------------
+Funcionalidades:
+- Subir evidencias asociadas a tareas
+- Tipos de archivos soportados:
+  * Imágenes: JPG, JPEG, PNG, GIF, SVG, WEBP
+  * PDFs
+  * Documentos: DOC, DOCX, XLS, XLSX, PPT, PPTX
+- Tamaño máximo: 10MB por archivo
+- Almacenamiento en AWS S3 (bucket privado)
+- Visualización de imágenes directamente en el navegador
+- Visualización de PDFs en el navegador
+- Descarga de documentos (Word, Excel, PowerPoint)
+- Eliminación de evidencias
+- URLs temporales firmadas (válidas por 60 minutos)
+- Organización en carpeta "evidencias/" dentro del bucket S3
+
+Permisos requeridos:
+- Ver tarea (para ver evidencias)
+- Editar tarea (para subir/eliminar evidencias)
+
+Características técnicas:
+- Integración con AWS S3 usando league/flysystem-aws-s3-v3
+- Archivos privados (no accesibles públicamente)
+- Generación de URLs temporales firmadas para acceso seguro
+- Verificación de existencia de archivos antes de generar URLs
+- Manejo de errores robusto
+
+4.5 SISTEMA DE PERMISOS Y ROLES
+--------------------------------
+Funcionalidades:
+- Roles base del sistema (definibles)
+- Permisos asociados a roles
+- Permisos globales del sistema
+- Permisos específicos por proyecto
+- Gestión de usuarios y asignación de roles
+- Duplicación de permisos entre usuarios
+- Control de acceso granular a nivel de:
+  * Proyectos
+  * Actividades
+  * Tareas
+  * Evidencias
+
+Roles del sistema:
+- Administrador del sistema
+- TI (Tecnologías de la Información)
+- Roles personalizables
+
+Permisos principales:
+- Gestión de proyectos (crear, editar, eliminar, ver)
+- Gestión de actividades (crear, editar, eliminar, ver)
+- Gestión de tareas (crear, editar, eliminar, ver)
+- Invitar usuarios a proyectos
+- Asignar permisos proyecto
+- Gestión de usuarios (solo Admin/TI)
+- Gestión de roles (solo Admin/TI)
+
+4.6 SISTEMA DE INVITACIONES
+----------------------------
+Funcionalidades:
+- Invitar usuarios a proyectos mediante correo electrónico
+- Tokens únicos para cada invitación
+- Aceptar o rechazar invitaciones
+- Estados de invitación (pendiente, aceptada, rechazada)
+- Registro de fecha de invitación y respuesta
+
+4.7 DASHBOARD Y MÉTRICAS
+-------------------------
+Funcionalidades:
+- Vista principal con resumen de proyectos
+- Métricas por proyecto:
+  * Progreso de actividades
+  * Progreso de tareas
+  * Tareas completadas vs pendientes
+  * Tareas próximas a vencer
+  * Tareas vencidas
+- Vista de calendario de tareas
+- KPIs del sistema
+
+4.8 SISTEMA DE NOTIFICACIONES
+------------------------------
+Funcionalidades:
+- Notificaciones por correo electrónico:
+  * Tarea asignada
+  * Tarea próxima a vencer
+  * Tarea vencida
+  * Invitación a proyecto
+- Configuración personalizable de notificaciones por usuario
+- Sistema de cola para envío de correos (asíncrono)
+
+4.9 SISTEMA DE COMENTARIOS
+---------------------------
+Funcionalidades:
+- Agregar comentarios a tareas
+- Editar comentarios
+- Visualizar historial de comentarios
+- Asociación de comentarios con usuarios
+
+4.10 TRAZABILIDAD (AUDITORÍA)
+-----------------------------
+Funcionalidades:
+- Registro automático de acciones realizadas en proyectos
+- Historial de cambios en:
+  * Creación de proyectos
+  * Modificaciones de proyectos
+  * Invitaciones
+  * Asignaciones de permisos
+- Información registrada:
+  * Usuario que realizó la acción
+  * Fecha y hora
+  * Tipo de acción
+  * Detalles específicos
+
+4.11 CALENDARIO
+---------------
+Funcionalidades:
+- Vista de calendario de tareas
+- Visualización de fechas de vencimiento
+- Filtros por proyecto, actividad, etc.
+
+================================================================================
+5. MODELOS DE DATOS PRINCIPALES
+================================================================================
+
+5.1 MODELOS CORE
+----------------
+- User: Usuarios del sistema
+- Role: Roles del sistema
+- Permisos: Permisos disponibles
+- Proyecto: Proyectos
+- Actividad: Actividades dentro de proyectos
+- Tarea: Tareas dentro de actividades
+- Evidencia: Archivos de evidencia asociados a tareas
+- Comentario: Comentarios en tareas
+- Trazabilidad: Registro de acciones (auditoría)
+- Departamentos: Departamentos de la organización
+- ProyectoUsuario: Tabla pivot para relación proyecto-usuario
+- ProyectoUserPermiso: Permisos específicos de usuario por proyecto
+- NotificacionConfig: Configuración de notificaciones por usuario
+
+5.2 RELACIONES PRINCIPALES
+---------------------------
+- Proyecto -> Actividades (HasMany)
+- Actividad -> Tareas (HasMany)
+- Tarea -> Evidencias (HasMany)
+- Tarea -> Comentarios (HasMany)
+- Proyecto -> Usuarios (BelongsToMany con rol)
+- Usuario -> Roles (BelongsToMany)
+- Rol -> Permisos (BelongsToMany)
+- Usuario -> Permisos por Proyecto (HasMany a través de ProyectoUserPermiso)
+
+================================================================================
+6. CONTROLADORES PRINCIPALES
+================================================================================
+
+6.1 CONTROLADORES DEL SISTEMA
+------------------------------
+- AuthController: Autenticación y manejo de sesiones (JWT)
+- UserController: Gestión de usuarios (solo Admin/TI)
+- RoleController: Gestión de roles y permisos base
+- ProyectoController: CRUD de proyectos, invitaciones, permisos
+- ActividadController: CRUD de actividades
+- TareaController: CRUD de tareas, asignaciones, comentarios
+- EvidenciaController: Gestión de evidencias (subida, visualización, descarga)
+- DashboardController: Dashboard principal y métricas
+- ProyectoMetricaController: Métricas específicas de proyectos
+- InvitacionController: Manejo de invitaciones a proyectos
+- CalendarioController: Vista de calendario de tareas
+
+6.2 MIDDLEWARE PERSONALIZADO
+-----------------------------
+- JwtMiddleware: Validación de tokens JWT
+- CheckPermission: Verificación de permisos granulares
+- RoleTiOrAdmin: Verificación de roles TI o Administrador
+- SanitizeInput: Sanitización de entradas (protección XSS)
+
+================================================================================
+7. SERVICIOS Y HELPERS
+================================================================================
+
+7.1 SERVICIOS
+-------------
+- NotificationService: Gestión de notificaciones y envío de correos
+- UserService: Servicios relacionados con usuarios
+
+7.2 HELPERS
+-----------
+- BreadcrumbHelper: Generación de breadcrumbs para navegación
+- PermisoHelper: Utilidades para manejo de permisos
+
+7.3 JOBS
+--------
+- SendEmailJob: Trabajo en cola para envío asíncrono de correos
+
+7.4 MAILABLES
+-------------
+- InvitacionProyecto: Email de invitación a proyecto
+- TareaAsignada: Email de notificación de tarea asignada
+- TareaProximaVencer: Email de alerta de tarea próxima a vencer
+- TareaVencida: Email de alerta de tarea vencida
+
+================================================================================
+8. INTEGRACIONES EXTERNAS
+================================================================================
+
+8.1 AWS S3 (ALMACENAMIENTO DE ARCHIVOS)
+----------------------------------------
+- Servicio: Amazon S3
+- Paquete: league/flysystem-aws-s3-v3 (^3.30)
+- Propósito: Almacenamiento seguro de evidencias
+- Configuración:
+  * Bucket privado
+  * URLs temporales firmadas (60 minutos de validez)
+  * Carpeta: evidencias/
+- Variables de entorno requeridas:
+  * AWS_ACCESS_KEY_ID
+  * AWS_SECRET_ACCESS_KEY
+  * AWS_DEFAULT_REGION
+  * AWS_BUCKET
+  * AWS_URL (opcional)
+  * AWS_ENDPOINT (opcional)
+
+8.2 CORREO ELECTRÓNICO (SMTP)
+------------------------------
+- Configuración SMTP para envío de notificaciones
+- Soporte para múltiples proveedores (Gmail, otros)
+- Sistema de cola para envío asíncrono
+- Variables de entorno requeridas:
+  * MAIL_MAILER
+  * MAIL_HOST
+  * MAIL_PORT
+  * MAIL_ENCRYPTION
+  * MAIL_USERNAME
+  * MAIL_PASSWORD
+  * MAIL_FROM_ADDRESS
+  * MAIL_FROM_NAME
+
+8.3 AUTENTICACIÓN JWT
+-----------------------
+- Biblioteca: firebase/php-jwt (^6.11)
+- Tokens JWT para autenticación de API
+- Middleware JwtMiddleware para validación
+
+================================================================================
+9. SEGURIDAD
+================================================================================
+
+9.1 MEDIDAS DE SEGURIDAD IMPLEMENTADAS
+---------------------------------------
+- Autenticación basada en JWT
+- Validación de permisos granulares (middleware)
+- Sanitización de inputs (protección XSS)
+- Archivos privados en S3 (no acceso público)
+- URLs temporales firmadas para evidencias
+- Validación de datos en todos los formularios
+- Soft delete para preservar datos eliminados
+- Trazabilidad de acciones (auditoría)
+
+9.2 CONTROL DE ACCESO
+----------------------
+- Sistema de roles base
+- Permisos globales
+- Permisos específicos por proyecto
+- Validación en cada ruta mediante middleware
+- Separación de privilegios (Admin/TI vs usuarios regulares)
+
+================================================================================
+10. ESTADO ACTUAL DEL PROYECTO
+================================================================================
+
+10.1 FUNCIONALIDADES COMPLETADAS
+---------------------------------
+✓ Sistema completo de autenticación con JWT
+✓ Gestión completa de usuarios, roles y permisos
+✓ CRUD completo de proyectos con invitaciones
+✓ CRUD completo de actividades
+✓ CRUD completo de tareas con asignaciones
+✓ Sistema de evidencias integrado con AWS S3
+✓ Visualización y descarga de evidencias
+✓ Sistema de comentarios en tareas
+✓ Dashboard con métricas
+✓ Sistema de notificaciones por email
+✓ Sistema de trazabilidad (auditoría)
+✓ Calendario de tareas
+✓ Soft delete en actividades y tareas
+✓ Sistema de permisos granulares por proyecto
+✓ Manejo de fechas con datetime en actividades y tareas
+
+10.2 CARACTERÍSTICAS TÉCNICAS IMPLEMENTADAS
+--------------------------------------------
+✓ Integración completa con AWS S3 para almacenamiento de evidencias
+✓ URLs temporales firmadas para acceso seguro a archivos
+✓ Soporte para múltiples tipos de archivos (imágenes, PDFs, documentos)
+✓ Sistema de visualización diferenciado (imágenes/PDFs vs documentos)
+✓ Sistema de descarga forzada para documentos no visualizables
+✓ Validación y sanitización de datos
+✓ Manejo de errores robusto
+✓ Logging de acciones importantes
+✓ Sistema de cola para correos asíncronos
+
+10.3 MEJORAS RECIENTES IMPLEMENTADAS
+-------------------------------------
+- Migración de almacenamiento local a AWS S3 para evidencias
+- Implementación de URLs temporales firmadas
+- Mejora en el sistema de visualización de evidencias
+- Diferenciación entre archivos visualizables (imágenes/PDFs) y descargables
+- Mejoras en el sistema de permisos y fechas
+- Implementación de soft delete
+
+10.4 ÁREAS DE MEJORA POTENCIAL
+-------------------------------
+- Migración de evidencias antiguas de storage local a S3 (si aplica)
+- Optimización de consultas para mejor rendimiento
+- Implementación de tests unitarios y de integración
+- Documentación de API (si se expone como API REST)
+- Mejoras en la interfaz de usuario
+- Implementación de búsqueda avanzada
+- Exportación de reportes
+
+================================================================================
+11. CONFIGURACIÓN Y REQUISITOS
+================================================================================
+
+11.1 REQUISITOS DEL SERVIDOR
+-----------------------------
+- PHP >= 8.2
+- Composer
+- MySQL/MariaDB
+- Extensiones PHP requeridas:
+  * PDO
+  * OpenSSL
+  * Mbstring
+  * Tokenizer
+  * XML
+  * Ctype
+  * JSON
+  * BCMath
+
+11.2 DEPENDENCIAS PRINCIPALES
+------------------------------
+- Laravel Framework ^12.0
+- firebase/php-jwt ^6.11
+- league/flysystem-aws-s3-v3 ^3.30
+- Laravel Tinker ^2.10.1
+
+11.3 VARIABLES DE ENTORNO REQUERIDAS
+-------------------------------------
+Configuración de aplicación:
+- APP_NAME
+- APP_ENV
+- APP_KEY
+- APP_DEBUG
+- APP_URL
+- DB_CONNECTION
+- DB_HOST
+- DB_PORT
+- DB_DATABASE
+- DB_USERNAME
+- DB_PASSWORD
+
+Configuración de AWS S3:
+- AWS_ACCESS_KEY_ID
+- AWS_SECRET_ACCESS_KEY
+- AWS_DEFAULT_REGION
+- AWS_BUCKET
+
+Configuración de correo:
+- MAIL_MAILER
+- MAIL_HOST
+- MAIL_PORT
+- MAIL_ENCRYPTION
+- MAIL_USERNAME
+- MAIL_PASSWORD
+- MAIL_FROM_ADDRESS
+- MAIL_FROM_NAME
+
+11.4 INSTALACIÓN
+----------------
+1. Clonar repositorio
+2. Instalar dependencias: composer install
+3. Configurar archivo .env
+4. Generar clave de aplicación: php artisan key:generate
+5. Ejecutar migraciones: php artisan migrate
+6. (Opcional) Ejecutar seeders: php artisan db:seed
+7. Configurar almacenamiento: php artisan storage:link (si se usa storage local)
+8. Limpiar caché: php artisan config:clear
+
+================================================================================
+12. ESTRUCTURA DE BASE DE DATOS
+================================================================================
+
+12.1 TABLAS PRINCIPALES
+------------------------
+- users: Usuarios del sistema
+- roles: Roles base del sistema
+- permisos: Permisos disponibles
+- role_permiso: Relación roles-permisos
+- proyectos: Proyectos
+- actividades: Actividades dentro de proyectos
+- tareas: Tareas dentro de actividades
+- evidencias: Archivos de evidencia
+- comentarios: Comentarios en tareas
+- proyecto_usuario: Relación proyecto-usuario (con rol y estado de invitación)
+- proyecto_user_permiso: Permisos específicos de usuario por proyecto
+- trazabilidad: Registro de acciones (auditoría)
+- departamentos: Departamentos
+- notificacion_config: Configuración de notificaciones
+- user_role: Relación usuario-rol
+
+12.2 CARACTERÍSTICAS DE BASE DE DATOS
+--------------------------------------
+- Timestamps automáticos (created_at, updated_at)
+- Soft delete en actividades y tareas (deleted_at)
+- Campos nullable según corresponda
+- Índices en relaciones principales
+- Foreign keys para integridad referencial
+
+================================================================================
+13. RUTAS Y ENDPOINTS PRINCIPALES
+================================================================================
+
+13.1 RUTAS DE AUTENTICACIÓN
+----------------------------
+- GET /login: Formulario de login
+- POST /login: Procesar login
+- GET /logout: Cerrar sesión
+
+13.2 RUTAS DE PROYECTOS
+------------------------
+- GET /proyectos: Listar proyectos
+- GET /proyectos/create: Formulario crear proyecto
+- POST /proyectos: Crear proyecto
+- GET /proyectos/{id}/edit: Formulario editar proyecto
+- PUT /proyectos/{id}: Actualizar proyecto
+- DELETE /proyectos/{id}: Eliminar proyecto
+- GET /proyectos/{id}/usuarios: Obtener usuarios por departamento
+- POST /proyectos/{id}/invitar: Invitar usuario
+- POST /proyectos/{id}/permisos: Asignar permisos
+- GET /proyectos/{id}/metricas: Ver métricas del proyecto
+- GET /proyectos/{id}/trazabilidad: Ver trazabilidad
+
+13.3 RUTAS DE ACTIVIDADES
+--------------------------
+- GET /actividades/{proyecto}: Listar actividades
+- POST /actividades: Crear actividad
+- PUT /actividades/{id}: Actualizar actividad
+- DELETE /actividades/{id}: Eliminar actividad
+- GET /actividades/{id}/tareas: Obtener tareas de actividad
+
+13.4 RUTAS DE TAREAS
+---------------------
+- GET /tareas/{actividad}: Listar tareas
+- POST /tareas: Crear tarea
+- PUT /tareas/{id}: Actualizar tarea
+- DELETE /tareas/{id}: Eliminar tarea
+- POST /tareas/{id}/toggle: Toggle completada/pendiente
+- POST /tareas/{id}/toggle-estado: Toggle pendiente/en progreso
+- POST /tareas/{id}/update-fecha: Actualizar fecha
+- POST /tareas/{id}/asignar: Asignar usuarios
+- PUT /tareas/{id}/descripcion: Actualizar descripción
+- PUT /tareas/{id}/comentarios: Actualizar comentarios
+- GET /tareas/{id}/comentarios: Obtener comentarios
+- GET /tareas/{id}/descripcion: Obtener descripción
+
+13.5 RUTAS DE EVIDENCIAS
+-------------------------
+- POST /tareas/{id}/evidencias: Subir evidencia
+- GET /tareas/{id}/evidencias: Listar evidencias
+- GET /tareas/{tareaId}/evidencias/{evidenciaId}: Obtener evidencia (JSON)
+- GET /tareas/{tareaId}/evidencias/{evidenciaId}/download: Descargar/visualizar evidencia
+- DELETE /tareas/{tareaId}/evidencias/{evidenciaId}: Eliminar evidencia
+
+13.6 RUTAS DE USUARIOS (Solo Admin/TI)
+---------------------------------------
+- GET /users: Listar usuarios
+- GET /users/create: Formulario crear usuario
+- POST /users: Crear usuario
+- GET /users/{id}/edit: Formulario editar usuario
+- PUT /users/{id}: Actualizar usuario
+- DELETE /users/{id}: Eliminar usuario
+- GET /users/{id}/manage: Gestionar roles y permisos
+- PUT /users/{id}/update-roles-permissions: Actualizar roles y permisos
+- POST /users/duplicate: Duplicar permisos entre usuarios
+
+13.7 RUTAS DE DASHBOARD
+------------------------
+- GET /dashboard: Dashboard principal
+- GET /inicio: Página de inicio con tareas y proyectos
+
+13.8 RUTAS DE CALENDARIO
+-------------------------
+- GET /calendario: Vista de calendario de tareas
+
+================================================================================
+14. NOTAS TÉCNICAS IMPORTANTES
+================================================================================
+
+14.1 ALMACENAMIENTO DE EVIDENCIAS
+----------------------------------
+- Los archivos se almacenan en AWS S3 bajo la ruta: evidencias/{nombre_archivo}
+- Formato de nombre de archivo: tarea_{tareaId}_{nombre_limpio}_{timestamp}_{random}.{ext}
+- Archivos privados (visibility: private)
+- URLs temporales válidas por 60 minutos
+- Tipos soportados: imágenes (JPG, PNG, GIF, SVG, WEBP), PDFs, documentos (DOC, DOCX, XLS, XLSX, PPT, PPTX)
+- Tamaño máximo: 10MB por archivo
+
+14.2 GESTIÓN DE PERMISOS
+-------------------------
+- Permisos se verifican mediante middleware CheckPermission
+- Formato: CheckPermission:nombre_permiso
+- Ejemplo: CheckPermission:ver proyecto
+- Los permisos pueden ser globales o específicos por proyecto
+- Los permisos específicos por proyecto tienen precedencia sobre los globales
+
+14.3 MANEJO DE FECHAS
+---------------------
+- Actividades y tareas usan campos datetime (fecha + hora)
+- Las actividades pueden tener hora de fin opcional
+- Las tareas tienen fecha de inicio y fecha de fin
+- El sistema maneja zonas horarias (configurable)
+
+14.4 SOFT DELETE
+----------------
+- Actividades y tareas implementan soft delete
+- Los registros no se eliminan físicamente, se marcan como eliminados
+- Permite recuperación de datos y mantenimiento de integridad referencial
+
+================================================================================
+15. LOGS Y MONITOREO
+================================================================================
+
+15.1 LOGGING
+------------
+- Logs de Laravel en storage/logs/laravel.log
+- Logs de errores de evidencias
+- Logs de acciones importantes en el sistema
+- Logs de errores de AWS S3
+- Logs de generación de URLs temporales
+
+15.2 MONITOREO RECOMENDADO
+---------------------------
+- Monitorear logs de errores regularmente
+- Verificar funcionamiento de AWS S3
+- Monitorear envío de correos
+- Revisar trazabilidad de acciones críticas
+- Monitorear uso de espacio en S3
+
+================================================================================
+16. MANTENIMIENTO Y SOPORTE
+================================================================================
+
+16.1 TAREAS DE MANTENIMIENTO REGULAR
+-------------------------------------
+- Limpiar caché periódicamente: php artisan config:clear
+- Revisar y limpiar logs antiguos
+- Verificar espacio disponible en S3
+- Revisar evidencias huérfanas (sin tarea asociada)
+- Revisar proyectos inactivos
+- Verificar integridad de permisos
+
+16.2 BACKUPS RECOMENDADOS
+--------------------------
+- Backup de base de datos (diario recomendado)
+- Backup de configuración (.env, config/)
+- Verificar políticas de retención de backups en AWS S3
+
+================================================================================
+17. PRÓXIMOS PASOS SUGERIDOS
+================================================================================
+
+17.1 MEJORAS SUGERIDAS
+----------------------
+- Implementar sistema de búsqueda avanzada
+- Agregar filtros adicionales en listados
+- Implementar exportación de reportes (PDF, Excel)
+- Mejorar sistema de notificaciones en tiempo real
+- Implementar sistema de etiquetas/tags
+- Agregar sistema de plantillas para proyectos
+- Implementar sistema de versionado de documentos
+- Mejorar sistema de métricas y gráficos
+
+17.2 OPTIMIZACIONES TÉCNICAS
+-----------------------------
+- Implementar caché para consultas frecuentes
+- Optimizar consultas N+1
+- Implementar paginación en listados grandes
+- Agregar índices adicionales en base de datos
+- Implementar compresión de imágenes al subir
+- Optimizar tamaño de archivos subidos
+
+================================================================================
+18. CONTACTO Y SOPORTE
+================================================================================
+
+Para soporte técnico o consultas sobre el proyecto, contactar al equipo de
+desarrollo o administrador del sistema.
+
+================================================================================
+                        FIN DE LA DOCUMENTACIÓN
+================================================================================
+
+Última actualización: Diciembre 2025
+Versión del documento: 1.0
+

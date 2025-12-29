@@ -64,6 +64,7 @@ class Proyecto extends Model
     }
 
     // Colaboradores (usuarios) - pivot proyecto_usuario con rol_proyecto
+    // Solo incluye usuarios con invitación aceptada
     public function colaboradores(): BelongsToMany
     {
         return $this->belongsToMany(
@@ -71,7 +72,19 @@ class Proyecto extends Model
             'proyecto_usuario',
             'proyecto_id',
             'user_id'
-        )->withPivot('rol_proyecto', 'created_at');
+        )->wherePivot('estado_invitacion', 'aceptada')
+         ->withPivot('rol_proyecto', 'created_at', 'estado_invitacion');
+    }
+
+    // Todos los usuarios del proyecto (incluyendo pendientes y rechazados)
+    public function todosUsuarios(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            User::class,
+            'proyecto_usuario',
+            'proyecto_id',
+            'user_id'
+        )->withPivot('rol_proyecto', 'estado_invitacion', 'created_at');
     }
 
     // Permisos a nivel de proyecto para usuarios (tabla proyecto_user_permiso)
@@ -132,6 +145,31 @@ class Proyecto extends Model
     }
 
     /**
+     * Verificar si el usuario tiene acceso al proyecto (puede verlo)
+     * (Administrador, TI, creador del proyecto o colaborador explícito)
+     */
+    public function usuarioTieneAcceso($user): bool
+    {
+        if (!$user) return false;
+        $userId = $user instanceof \App\Models\User ? $user->id : (int) $user;
+        $userModel = $user instanceof \App\Models\User ? $user : \App\Models\User::find($userId);
+        if (!$userModel) return false;
+
+        // Administrador o TI tienen acceso completo
+        if ($userModel->hasRole('Administrador') || $userModel->hasRole('admin') || $userModel->hasRole('TI')) {
+            return true;
+        }
+
+        // El usuario es el creador del proyecto
+        if ($this->esCreadorPor($userModel)) {
+            return true;
+        }
+
+        // El usuario está explícitamente asignado como colaborador
+        return $this->colaboradores()->where('users.id', $userId)->exists();
+    }
+
+    /**
      * Verificar si el usuario puede editar/eliminar actividades y tareas del proyecto
      * (Administrador, TI o creador del proyecto)
      */
@@ -180,11 +218,12 @@ class Proyecto extends Model
             $datosProyecto['created_by'] = $usuarioCreadorId;
             $proyecto = static::create($datosProyecto);
 
-            // Registrar al usuario creador como líder
+            // Registrar al usuario creador como líder (aceptada automáticamente)
             ProyectoUsuario::create([
                 'proyecto_id' => $proyecto->id,
                 'user_id' => $usuarioCreadorId,
-                'rol_proyecto' => 'lider'
+                'rol_proyecto' => 'lider',
+                'estado_invitacion' => 'aceptada'
             ]);
 
             // Asignar colaboradores si se proporcionaron
@@ -195,10 +234,12 @@ class Proyecto extends Model
                         continue;
                     }
 
+                    // Al crear proyecto, los colaboradores se asignan directamente (aceptada)
                     ProyectoUsuario::create([
                         'proyecto_id' => $proyecto->id,
                         'user_id' => $colaboradorData['user_id'],
-                        'rol_proyecto' => $colaboradorData['rol_proyecto'] ?? 'colaborador'
+                        'rol_proyecto' => $colaboradorData['rol_proyecto'] ?? 'colaborador',
+                        'estado_invitacion' => 'aceptada'
                     ]);
                 }
             }
@@ -216,11 +257,29 @@ class Proyecto extends Model
     /** Obtener proyectos en los que participa un usuario */
     public static function obtenerPorUsuario(int $userId)
 {
-    return static::where('estado', '!=', 'cancelado')
-        ->whereHas('colaboradores', function ($query) use ($userId) {
-            $query->where('users.id', $userId);
-        })
-        ->with(['colaboradores', 'actividades.tareas'])
+    $usuario = User::find($userId);
+    if (!$usuario) {
+        return collect([]);
+    }
+    
+    // Verificar si el usuario es Administrador o TI (pueden ver todos los proyectos)
+    $esAdmin = $usuario->hasRole('Administrador') || $usuario->hasRole('admin') || $usuario->hasRole('TI');
+    
+    $query = static::where('estado', '!=', 'cancelado');
+    
+    // Si es administrador, puede ver todos los proyectos
+    if (!$esAdmin) {
+        $query->where(function ($query) use ($userId) {
+            // El usuario es el creador del proyecto
+            $query->where('created_by', $userId)
+                  // O el usuario está explícitamente asignado como colaborador en proyecto_usuario
+                  ->orWhereHas('colaboradores', function ($q) use ($userId) {
+                      $q->where('users.id', $userId);
+                  });
+        });
+    }
+    
+    return $query->with(['colaboradores', 'actividades.tareas'])
         ->orderBy('created_at', 'desc')
         ->get();
 }
@@ -228,25 +287,30 @@ class Proyecto extends Model
     /** Obtener proyectos visibles para un usuario */
     public static function obtenerVisiblesPorUsuario(User $usuario)
 {
-    return static::with([
-        'usuarios' => function ($q) {
+    // Verificar si el usuario es Administrador o TI (pueden ver todos los proyectos)
+    $esAdmin = $usuario->hasRole('Administrador') || $usuario->hasRole('admin') || $usuario->hasRole('TI');
+    
+    $query = static::with([
+        'colaboradores' => function ($q) {
             $q->withPivot('rol_proyecto');
         }
     ])
-    ->where('estado', '!=', 'cancelado')
-    ->where(function ($query) use ($usuario) {
-        $query
-            ->where('departamento_id', $usuario->departamento)
-            ->orWhereHas('usuarios', function ($q) use ($usuario) {
-                $q->where('users.id', $usuario->id);
-            })
-            ->orWhereHas('usuarios', function ($q) use ($usuario) {
-                $q->where('users.id', $usuario->id)
-                  ->where('proyecto_usuario.rol_proyecto', 'lider');
-            });
-    })
-    ->latest()
-    ->paginate(10);
+    ->where('estado', '!=', 'cancelado');
+    
+    // Si es administrador, puede ver todos los proyectos
+    if (!$esAdmin) {
+        $query->where(function ($query) use ($usuario) {
+            // El usuario es el creador del proyecto
+            $query->where('created_by', $usuario->id)
+                  // O el usuario está explícitamente asignado como colaborador con invitación aceptada
+                  ->orWhereHas('colaboradores', function ($q) use ($usuario) {
+                      $q->where('users.id', $usuario->id)
+                        ->where('proyecto_usuario.estado_invitacion', 'aceptada');
+                  });
+        });
+    }
+    
+    return $query->latest()->paginate(10);
 }
 
     /** Detectar cambios en un proyecto */
