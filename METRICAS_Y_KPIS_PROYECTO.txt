@@ -1,0 +1,537 @@
+================================================================================
+                    MÉTRICAS, ESTADÍSTICAS E INDICADORES CLAVE (KPIs)
+                    Sistema de Gestión de Proyectos
+                    Fecha: 2025
+================================================================================
+
+================================================================================
+A. MÉTRICAS A NIVEL DE PROYECTO INDIVIDUAL
+================================================================================
+
+1. MÉTRICAS GENERALES DEL PROYECTO
+----------------------------------
+1.1 Información Básica
+    - Nombre del proyecto
+    - Estado actual (pendiente, en_progreso, finalizado, cancelado)
+    - Departamento asignado
+    - Usuario creador
+    - Fecha de creación
+    - Última actualización
+    - Color identificador del proyecto
+
+1.2 Fechas y Plazos
+    - Fecha de inicio planificada
+    - Fecha de fin planificada
+    - Fecha de inicio real (primera actividad iniciada)
+    - Fecha de fin real (última actividad finalizada)
+    - Duración planificada (días)
+    - Duración real (días)
+    - Días restantes hasta fecha fin planificada
+    - Días de retraso o adelanto
+    - Porcentaje de tiempo transcurrido
+
+1.3 Colaboradores y Roles
+    - Total de colaboradores asignados
+    - Cantidad de líderes de proyecto
+    - Cantidad de colaboradores
+    - Cantidad de visores
+    - Distribución de colaboradores por departamento
+    - Último colaborador agregado y fecha
+
+
+2. MÉTRICAS DE ACTIVIDADES
+--------------------------
+2.1 Resumen de Actividades
+    - Total de actividades del proyecto
+    - Actividades pendientes
+    - Actividades en progreso
+    - Actividades finalizadas
+    - Actividades eliminadas
+    - Porcentaje de actividades completadas
+
+2.2 Distribución por Estado
+    - Cantidad por estado (pendiente, en_progreso, finalizado, eliminado)
+    - Porcentaje de actividades por estado
+    - Actividades sin iniciar (fecha_inicio futura)
+    - Actividades vencidas (fecha_fin pasada y estado != finalizado)
+
+2.3 Tiempo de Actividades
+    - Promedio de días de duración de actividades
+    - Actividad más corta (duración)
+    - Actividad más larga (duración)
+    - Actividades que exceden su fecha_fin planificada
+    - Actividades próximas a vencer (próximos 7 días)
+
+
+3. MÉTRICAS DE TAREAS
+---------------------
+3.1 Resumen de Tareas
+    - Total de tareas del proyecto (excluyendo independientes)
+    - Tareas pendientes
+    - Tareas en progreso
+    - Tareas completadas
+    - Tareas eliminadas
+    - Porcentaje de tareas completadas
+    - Tareas independientes asociadas a colaboradores del proyecto
+
+3.2 Distribución por Estado
+    - Cantidad por estado (pendiente, en_progreso, completado, eliminado)
+    - Porcentaje de tareas por estado
+    - Tareas sin asignar
+    - Tareas con múltiples asignaciones
+
+3.3 Distribución por Prioridad
+    - Total de tareas de prioridad alta
+    - Total de tareas de prioridad media
+    - Total de tareas de prioridad baja
+    - Porcentaje de tareas por prioridad
+    - Tareas de alta prioridad pendientes/en progreso
+
+3.4 Tareas por Usuario Asignado
+    - Cantidad de tareas por colaborador
+    - Tareas completadas por colaborador
+    - Tareas pendientes por colaborador
+    - Tareas en progreso por colaborador
+    - Tareas vencidas por colaborador
+    - Usuario con mayor carga de trabajo
+    - Usuario con mayor porcentaje de tareas completadas
+
+3.5 Tiempo de Tareas
+    - Promedio de días de duración de tareas
+    - Tarea más corta (duración)
+    - Tarea más larga (duración)
+    - Tareas vencidas (fecha_fin pasada y estado != completado)
+    - Tareas próximas a vencer (próximos 7 días)
+    - Tareas sin fecha_fin definida
+    - Tiempo promedio de completar una tarea (desde creación hasta completado)
+
+
+4. MÉTRICAS DE EVIDENCIAS Y DOCUMENTACIÓN
+-----------------------------------------
+4.1 Resumen de Evidencias
+    - Total de evidencias subidas en el proyecto
+    - Evidencias por tarea (promedio)
+    - Tareas sin evidencias
+    - Tareas con evidencias
+    - Tareas completadas con evidencias
+    - Tareas completadas sin evidencias
+
+4.2 Tipos de Evidencias
+    - Distribución por tipo de archivo
+    - Evidencias por actividad
+    - Última evidencia subida (fecha y usuario)
+
+
+5. MÉTRICAS DE COMENTARIOS Y COMUNICACIÓN
+-----------------------------------------
+5.1 Comentarios
+    - Total de comentarios en el proyecto
+    - Comentarios por tarea (promedio)
+    - Tareas sin comentarios
+    - Tareas con comentarios
+    - Usuarios más activos en comentarios
+    - Último comentario (fecha y usuario)
+
+
+6. MÉTRICAS DE TRABAJO Y PRODUCTIVIDAD
+--------------------------------------
+6.1 Velocidad de Completado
+    - Tareas completadas por semana/mes
+    - Actividades completadas por semana/mes
+    - Velocidad promedio de completar tareas
+    - Tasa de completado (tareas completadas / tiempo transcurrido)
+
+6.2 Eficiencia
+    - Tiempo promedio desde creación hasta inicio de tarea
+    - Tiempo promedio desde inicio hasta completado de tarea
+    - Ratio de tareas completadas vs creadas
+    - Ratio de actividades completadas vs creadas
+
+
+7. MÉTRICAS DE CALENDARIO Y CUMPLIMIENTO
+----------------------------------------
+7.1 Cumplimiento de Plazos
+    - Tareas completadas a tiempo
+    - Tareas completadas con retraso
+    - Tareas completadas antes de tiempo
+    - Actividades completadas a tiempo
+    - Actividades completadas con retraso
+    - Actividades completadas antes de tiempo
+    - Porcentaje de cumplimiento de plazos (tareas)
+    - Porcentaje de cumplimiento de plazos (actividades)
+    - Días promedio de retraso en tareas completadas
+    - Días promedio de retraso en actividades completadas
+
+7.2 Alertas y Vencimientos
+    - Tareas vencidas sin completar
+    - Actividades vencidas sin completar
+    - Tareas que vencen en los próximos 3 días
+    - Tareas que vencen en los próximos 7 días
+    - Actividades que vencen en los próximos 7 días
+    - Tareas de alta prioridad vencidas
+
+
+8. MÉTRICAS DE TRAZABILIDAD Y CAMBIOS
+-------------------------------------
+8.1 Historial
+    - Total de acciones registradas en trazabilidad
+    - Última acción registrada (fecha, usuario, acción)
+    - Usuarios más activos en modificaciones
+    - Frecuencia de modificaciones (por semana/mes)
+    - Cambios más comunes realizados
+
+
+9. MÉTRICAS DE PROGRESO VISUAL
+------------------------------
+9.1 Indicadores de Progreso
+    - Porcentaje de avance del proyecto (basado en tareas completadas)
+    - Porcentaje de avance del proyecto (basado en actividades completadas)
+    - Porcentaje de avance por actividad
+    - Gráfico de progreso temporal (burnup/burndown)
+    - Estado de salud del proyecto (verde/amarillo/rojo basado en métricas)
+
+
+10. INDICADORES CLAVE DE RENDIMIENTO (KPIs) POR PROYECTO
+--------------------------------------------------------
+10.1 KPI de Completitud
+     - % de tareas completadas del total
+     - % de actividades completadas del total
+     - % de avance del proyecto (promedio ponderado)
+
+10.2 KPI de Tiempo
+     - Cumplimiento de fecha_fin planificada (Sí/No)
+     - % de tareas completadas a tiempo
+     - % de actividades completadas a tiempo
+     - Variación de tiempo (días de retraso/adelanto)
+
+10.3 KPI de Calidad
+     - % de tareas completadas con evidencias
+     - Promedio de evidencias por tarea completada
+     - % de tareas con comentarios (participación)
+
+10.4 KPI de Recursos
+     - Tasa de utilización de colaboradores (tareas asignadas/total colaboradores)
+     - Distribución equitativa de carga de trabajo (coeficiente de variación)
+     - Colaboradores más productivos (tareas completadas/tareas asignadas)
+
+
+================================================================================
+B. MÉTRICAS A NIVEL GLOBAL (DASHBOARD DE ADMINISTRADORES)
+================================================================================
+
+1. MÉTRICAS GLOBALES DE PROYECTOS
+---------------------------------
+1.1 Resumen General
+    - Total de proyectos en el sistema
+    - Proyectos activos (en_progreso)
+    - Proyectos pendientes
+    - Proyectos finalizados
+    - Proyectos cancelados
+    - Proyectos creados en el último mes
+    - Proyectos finalizados en el último mes
+    - Proyectos cancelados en el último mes
+
+1.2 Distribución por Estado
+    - Cantidad de proyectos por estado
+    - Porcentaje de proyectos por estado
+    - Tasa de éxito (finalizados vs cancelados)
+    - Tasa de finalización (finalizados / total proyectos)
+
+1.3 Distribución por Departamento
+    - Cantidad de proyectos por departamento
+    - Proyectos activos por departamento
+    - Proyectos finalizados por departamento
+    - Departamento con más proyectos
+    - Departamento con mayor tasa de éxito
+    - Proyectos por departamento en los últimos 6 meses
+
+1.4 Tiempo de Proyectos
+    - Duración promedio de proyectos finalizados
+    - Proyecto más largo (duración)
+    - Proyecto más corto (duración)
+    - Proyectos que exceden su fecha_fin planificada
+    - Tasa de cumplimiento de plazos a nivel proyecto
+
+
+2. MÉTRICAS GLOBALES DE ACTIVIDADES
+-----------------------------------
+2.1 Resumen General
+    - Total de actividades en el sistema
+    - Actividades pendientes
+    - Actividades en progreso
+    - Actividades finalizadas
+    - Actividades eliminadas
+    - Actividades creadas en el último mes
+    - Actividades finalizadas en el último mes
+
+2.2 Eficiencia
+    - Tasa de completado de actividades (finalizadas / total)
+    - Promedio de actividades por proyecto
+    - Actividades por proyecto más activo
+    - Tiempo promedio de completar una actividad
+
+
+3. MÉTRICAS GLOBALES DE TAREAS
+------------------------------
+3.1 Resumen General
+    - Total de tareas en el sistema (incluyendo independientes)
+    - Total de tareas de proyectos (excluyendo independientes)
+    - Total de tareas independientes
+    - Tareas pendientes
+    - Tareas en progreso
+    - Tareas completadas
+    - Tareas eliminadas
+    - Tareas creadas en el último mes
+    - Tareas completadas en el último mes
+
+3.2 Distribución por Prioridad
+    - Total de tareas de prioridad alta
+    - Total de tareas de prioridad media
+    - Total de tareas de prioridad baja
+    - Porcentaje de tareas por prioridad
+    - Tareas de alta prioridad pendientes/en progreso
+
+3.3 Eficiencia
+    - Tasa de completado de tareas (completadas / total)
+    - Promedio de tareas por proyecto
+    - Promedio de tareas por actividad
+    - Tareas por proyecto más activo
+    - Tiempo promedio de completar una tarea
+
+
+4. MÉTRICAS GLOBALES DE USUARIOS
+--------------------------------
+4.1 Resumen de Usuarios
+    - Total de usuarios activos en el sistema
+    - Total de usuarios activos por departamento
+    - Usuarios con más proyectos asignados
+    - Usuarios más productivos (mayor cantidad de tareas completadas)
+    - Usuarios líderes de proyecto (cantidad)
+    - Usuarios creadores de proyectos
+
+4.2 Productividad por Usuario
+    - Tareas asignadas por usuario (promedio)
+    - Tareas completadas por usuario (promedio)
+    - Tasa de completado por usuario (completadas/asignadas)
+    - Usuarios con tareas vencidas
+    - Usuarios con mayor carga de trabajo actual
+    - Usuarios con menor carga de trabajo
+
+4.3 Participación
+    - Usuarios más activos en comentarios
+    - Usuarios que suben más evidencias
+    - Usuarios más activos en modificaciones (trazabilidad)
+    - Usuarios inactivos (sin actividad reciente)
+
+
+5. MÉTRICAS GLOBALES DE EVIDENCIAS
+----------------------------------
+5.1 Resumen
+    - Total de evidencias en el sistema
+    - Evidencias subidas en el último mes
+    - Promedio de evidencias por tarea
+    - Tareas con evidencias (cantidad y %)
+    - Tareas sin evidencias (cantidad y %)
+    - Distribución de tipos de archivo
+    - Tamaño total de evidencias (si se almacena)
+
+
+6. MÉTRICAS GLOBALES DE COMENTARIOS
+-----------------------------------
+6.1 Resumen
+    - Total de comentarios en el sistema
+    - Comentarios en el último mes
+    - Promedio de comentarios por tarea
+    - Tareas con comentarios (cantidad y %)
+    - Tareas sin comentarios (cantidad y %)
+    - Usuarios más activos en comentarios
+
+
+7. MÉTRICAS GLOBALES DE CUMPLIMIENTO
+------------------------------------
+7.1 Cumplimiento de Plazos
+    - Tasa global de cumplimiento de plazos (tareas)
+    - Tasa global de cumplimiento de plazos (actividades)
+    - Tasa global de cumplimiento de plazos (proyectos)
+    - Proyectos que cumplen fecha_fin planificada
+    - Proyectos que no cumplen fecha_fin planificada
+    - Días promedio de retraso a nivel global
+    - Tareas vencidas sin completar (total)
+    - Actividades vencidas sin completar (total)
+
+7.2 Alertas Globales
+    - Total de tareas vencidas
+    - Total de actividades vencidas
+    - Total de proyectos con retraso
+    - Tareas que vencen en los próximos 7 días
+    - Actividades que vencen en los próximos 7 días
+    - Proyectos que vencen en los próximos 30 días
+
+
+8. MÉTRICAS DE TRAZABILIDAD GLOBAL
+----------------------------------
+8.1 Actividad del Sistema
+    - Total de acciones registradas
+    - Acciones en el último mes
+    - Acciones más comunes realizadas
+    - Usuarios más activos en modificaciones
+    - Proyectos con más cambios registrados
+    - Frecuencia de actividad (acciones por día/semana)
+
+
+9. MÉTRICAS TEMPORALES Y TENDENCIAS
+-----------------------------------
+9.1 Tendencias de Proyectos
+    - Proyectos creados por mes (últimos 12 meses)
+    - Proyectos finalizados por mes (últimos 12 meses)
+    - Proyectos cancelados por mes (últimos 12 meses)
+    - Tasa de éxito por mes
+    - Tendencia de duración promedio de proyectos
+
+9.2 Tendencias de Tareas
+    - Tareas creadas por mes (últimos 12 meses)
+    - Tareas completadas por mes (últimos 12 meses)
+    - Tasa de completado por mes
+    - Tendencia de tiempo promedio de completar tareas
+
+9.3 Tendencias de Actividades
+    - Actividades creadas por mes (últimos 12 meses)
+    - Actividades completadas por mes (últimos 12 meses)
+    - Tasa de completado por mes
+
+
+10. MÉTRICAS DE DEPARTAMENTOS
+-----------------------------
+10.1 Comparativa por Departamento
+     - Proyectos activos por departamento
+     - Tareas pendientes por departamento
+     - Tareas completadas por departamento
+     - Tasa de completado por departamento
+     - Usuarios activos por departamento
+     - Productividad promedio por departamento
+     - Departamento con mejor desempeño
+     - Departamento con mayor carga de trabajo
+
+
+11. MÉTRICAS DE CALIDAD Y PARTICIPACIÓN
+---------------------------------------
+11.1 Calidad
+     - % de tareas completadas con evidencias (global)
+     - Promedio de evidencias por tarea completada
+     - % de tareas con comentarios (global)
+     - Promedio de comentarios por tarea
+
+11.2 Participación
+     - Tasa de participación (usuarios activos / total usuarios)
+     - Proyectos con mayor participación (colaboradores)
+     - Proyectos con menor participación
+     - Distribución de colaboradores por proyecto
+
+
+12. INDICADORES CLAVE DE RENDIMIENTO (KPIs) GLOBALES
+----------------------------------------------------
+12.1 KPI de Productividad
+     - Tasa global de completado de proyectos
+     - Tasa global de completado de tareas
+     - Tasa global de completado de actividades
+     - Promedio de tareas completadas por usuario por mes
+     - Velocidad promedio de trabajo (tareas/día)
+
+12.2 KPI de Eficiencia
+     - Tiempo promedio de completar proyectos
+     - Tiempo promedio de completar actividades
+     - Tiempo promedio de completar tareas
+     - Tasa de utilización de recursos (colaboradores)
+     - Ratio proyectos finalizados / proyectos cancelados
+
+12.3 KPI de Calidad
+     - % de tareas completadas con evidencias
+     - % de proyectos con trazabilidad completa
+     - % de tareas con seguimiento (comentarios)
+     - Satisfacción de plazos (proyectos a tiempo)
+
+12.4 KPI de Gestión
+     - Tasa de éxito de proyectos (finalizados vs cancelados)
+     - Tasa de cumplimiento de plazos (proyectos)
+     - Proyectos atrasados / total proyectos activos
+     - Retraso promedio en días
+     - Distribución equitativa de carga de trabajo
+
+
+13. MÉTRICAS DE SALUD DEL SISTEMA
+---------------------------------
+13.1 Estado General
+     - Proyectos en riesgo (múltiples tareas vencidas)
+     - Proyectos saludables (en tiempo, sin tareas vencidas)
+     - Proyectos críticos (alta prioridad, vencidas)
+     - Proyectos bloqueados (sin actividad reciente)
+
+13.2 Alertas y Acciones Requeridas
+     - Proyectos que requieren atención inmediata
+     - Usuarios con sobrecarga de trabajo
+     - Departamentos con proyectos atrasados
+     - Tendencias negativas (aumento de cancelaciones, retrasos)
+
+
+14. MÉTRICAS DE ADOPCIÓN Y USO
+------------------------------
+14.1 Uso del Sistema
+     - Proyectos activos vs proyectos inactivos
+     - Usuarios activos vs usuarios inactivos
+     - Tareas creadas en el último mes
+     - Actividades creadas en el último mes
+     - Crecimiento de proyectos (mes a mes)
+     - Crecimiento de usuarios activos
+
+
+15. REPORTES Y VISUALIZACIONES RECOMENDADAS
+-------------------------------------------
+15.1 Gráficos Sugeridos
+     - Gráfico de pastel: Distribución de proyectos por estado
+     - Gráfico de barras: Proyectos por departamento
+     - Gráfico de líneas: Tendencias de proyectos creados/finalizados
+     - Gráfico de barras: Top 10 usuarios más productivos
+     - Gráfico de barras: Top 10 proyectos con más tareas
+     - Gráfico de calor: Carga de trabajo por departamento
+     - Gráfico de burnup: Progreso acumulado de proyectos
+     - Gráfico de Gantt: Timeline de proyectos activos
+
+15.2 Tablas Resumen
+     - Tabla de proyectos activos con métricas clave
+     - Tabla de usuarios con estadísticas de productividad
+     - Tabla de departamentos con métricas comparativas
+     - Tabla de proyectos en riesgo
+
+
+================================================================================
+NOTAS IMPORTANTES
+================================================================================
+
+1. Las métricas deben calcularse considerando soft deletes (excluir registros 
+   con estado 'eliminado' cuando corresponda).
+
+2. Para tareas independientes, considerar si deben incluirse o excluirse según 
+   el contexto de la métrica.
+
+3. Las fechas deben manejarse como datetime para cálculos precisos de tiempo 
+   transcurrido.
+
+4. Implementar caché para métricas que requieren cálculos complejos y se 
+   consultan frecuentemente.
+
+5. Considerar filtros temporales (último mes, último trimestre, último año) 
+   para métricas históricas.
+
+6. Las métricas de administradores deben ser agregadas y permitir drill-down 
+   a nivel de proyecto cuando sea necesario.
+
+7. Implementar alertas automáticas para métricas críticas (proyectos en riesgo, 
+   tareas vencidas, etc.).
+
+8. Las visualizaciones deben ser responsivas y adaptarse a dispositivos móviles 
+   (mobile-first).
+
+================================================================================
+FIN DEL DOCUMENTO
+================================================================================
+

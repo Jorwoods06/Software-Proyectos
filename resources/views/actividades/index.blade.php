@@ -987,10 +987,7 @@
                 <i class="bi bi-arrow-left"></i>
                 <span class="d-none d-md-inline">Proyectos</span>
             </a>
-            <button type="button" class="btn-action btn-colaboradores" data-bs-toggle="modal" data-bs-target="#modalColaboradores">
-                <i class="bi bi-people"></i>
-                <span class="d-none d-md-inline">Add Collaborators</span>
-            </button>
+           
             @permiso('crear actividades')
             <button type="button" class="btn-action btn-add-activity" data-bs-toggle="modal" data-bs-target="#modalCrearActividad">
                 <i class="bi bi-plus-lg"></i>

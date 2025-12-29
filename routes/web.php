@@ -11,6 +11,7 @@ use App\Http\Controllers\ActividadController; // Controlador de gestion de activ
 use App\Http\Controllers\TareaController; // Controlador de gestion de tareas dentro de actividades de los proyectos
 use App\Http\Controllers\EvidenciaController; // Controlador de gestion de evidencias dentro de tareas de las actividades de los proyectos
 use App\Http\Controllers\ProyectoController; // Controlador de gestion de proyectos
+use App\Http\Controllers\ProyectoMetricaController; // Controlador de metricas de proyectos
 // Llamado de los Middleware
 use App\Http\Middleware\CheckPermission; // Revision de permisos  
 use App\Http\Middleware\JwtMiddleware; // Validacion de token JWT
@@ -108,6 +109,11 @@ Route::middleware([JwtMiddleware::class, SanitizeInput::class])->group(function 
         // Ver trazabilidad del proyecto
         Route::get('/proyectos/{id}/trazabilidad', [ProyectoController::class, 'verTrazabilidad'])
             ->name('proyectos.trazabilidad');
+
+        // Métricas del proyecto
+        Route::get('/{id}/metricas', [ProyectoMetricaController::class, 'index'])
+            ->middleware([CheckPermission::class . ':ver proyecto'])
+            ->name('proyectos.metricas');
     });
 
     Route::prefix('actividades')->group(function () {

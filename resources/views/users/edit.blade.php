@@ -1,4 +1,4 @@
-@extends('dashboard')
+@extends('layouts.app')
 @section('title','Editar Usuario')
 @section('content')
 <h2>Editar Usuario</h2>

@@ -571,6 +571,7 @@ $proyectoActualId = $actividad ? (int) $actividad->proyecto_id : null;
     </div>
 
     <ul class="sidebar-nav">
+        @if(isset($auth_user) && $auth_user && ($auth_user->hasRole('TI') || $auth_user->hasRole('Administrador')))
         <li class="nav-item">
             <a href="{{ route('dashboard') }}"
                 class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
@@ -578,7 +579,7 @@ $proyectoActualId = $actividad ? (int) $actividad->proyecto_id : null;
                 <span>Dashboard</span>
             </a>
         </li>
-
+        @endif
 
         <li class="nav-item">
             <a href="{{ route('inicio') }}"

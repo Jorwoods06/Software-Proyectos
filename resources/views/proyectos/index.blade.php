@@ -334,6 +334,12 @@
                                             <i class="bi bi-diagram-3"></i>
                                         </a>
                                     @endif
+                                    <a href="{{ route('proyectos.metricas', $proyecto->id) }}" 
+                                       class="btn btn-sm btn-info btn-accion" 
+                                       data-bs-toggle="tooltip" 
+                                       title="Ver métricas del proyecto">
+                                        <i class="bi bi-graph-up"></i>
+                                    </a>
                                 </div>
                             </td>
                         </tr>
