@@ -37,12 +37,31 @@ class ProyectoController extends Controller
 
     public function create()
     {
+        // Verificar que el usuario no sea Auditor
+        $auth_user = User::with('roles')->find(session('user_id'));
+        if ($auth_user && ($auth_user->hasRole('Auditor') || $auth_user->hasRole('auditor'))) {
+            return redirect()->route('proyectos.index')
+                ->with('error', 'Los usuarios con rol Auditor no pueden crear proyectos. Solo tienen permisos de lectura.');
+        }
+
         $departamentos = Departamentos::obtenerConUsuariosActivos();
         return view('proyectos.create', compact('departamentos'));
     }
 
     public function store(Request $request)
     {
+        // Verificar que el usuario no sea Auditor
+        $auth_user = User::with('roles')->find(session('user_id'));
+        if ($auth_user && ($auth_user->hasRole('Auditor') || $auth_user->hasRole('auditor'))) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Los usuarios con rol Auditor no pueden crear proyectos. Solo tienen permisos de lectura.'
+                ], 403);
+            }
+            return redirect()->route('proyectos.index')
+                ->with('error', 'Los usuarios con rol Auditor no pueden crear proyectos. Solo tienen permisos de lectura.');
+        }
         $data = $request->validate([
             'nombre'       => 'required|string|max:150',
             'descripcion'  => 'nullable|string',
@@ -83,6 +102,13 @@ class ProyectoController extends Controller
 
     public function edit($id)
     {
+        // Verificar que el usuario no sea Auditor
+        $auth_user = User::with('roles')->find(session('user_id'));
+        if ($auth_user && ($auth_user->hasRole('Auditor') || $auth_user->hasRole('auditor'))) {
+            return redirect()->route('proyectos.index')
+                ->with('error', 'Los usuarios con rol Auditor no pueden editar proyectos. Solo tienen permisos de lectura.');
+        }
+
         $usuario = User::find(session('user_id'));
         
         $proyecto = Proyecto::findOrFail($id);
@@ -100,6 +126,19 @@ class ProyectoController extends Controller
 
 public function update(Request $request, $id)
 {
+    // Verificar que el usuario no sea Auditor
+    $auth_user = User::with('roles')->find(session('user_id'));
+    if ($auth_user && ($auth_user->hasRole('Auditor') || $auth_user->hasRole('auditor'))) {
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Los usuarios con rol Auditor no pueden editar proyectos. Solo tienen permisos de lectura.'
+            ], 403);
+        }
+        return redirect()->route('proyectos.index')
+            ->with('error', 'Los usuarios con rol Auditor no pueden editar proyectos. Solo tienen permisos de lectura.');
+    }
+
     $data = $request->validate([
         'nombre'       => 'required|string|max:255',
         'descripcion'  => 'nullable|string',
@@ -169,6 +208,12 @@ public function update(Request $request, $id)
 
         if (!$usuario) {
             return back()->with('error', 'Usuario no encontrado.');
+        }
+
+        // Verificar que el usuario no sea Auditor
+        if ($usuario->hasRole('Auditor') || $usuario->hasRole('auditor')) {
+            return redirect()->route('proyectos.index')
+                ->with('error', 'Los usuarios con rol Auditor no pueden eliminar proyectos. Solo tienen permisos de lectura.');
         }
 
         // Obtener nombres de los roles como array
@@ -341,21 +386,50 @@ public function update(Request $request, $id)
     public function verTrazabilidad($id)
     {
         $proyecto = Proyecto::with('departamento')->findOrFail($id);
-        $usuario  = User::find(session('user_id'));
+        $usuario  = User::with('roles')->find(session('user_id'));
 
-        // Verificar si es líder del proyecto
-        $esLiderProyecto = $proyecto->usuarios()
-            ->wherePivot('rol_proyecto', 'lider')
-            ->where('users.id', $usuario->id)
-            ->exists();
-
-        // Verificar si es líder del departamento
-        $esLiderDepartamento = $proyecto->departamento 
-            && $proyecto->departamento->lider_id === $usuario->id;
-
-        if (! $esLiderProyecto && ! $esLiderDepartamento) {
+        if (!$usuario) {
             return redirect()->route('proyectos.index')
-                ->with('error', 'No tienes permisos para ver la trazabilidad de este proyecto.');
+                ->with('error', 'Usuario no autenticado.');
+        }
+
+        // Asegurar que los roles estén cargados
+        if (!$usuario->relationLoaded('roles')) {
+            $usuario->load('roles');
+        }
+
+        // Verificar si el usuario es Auditor (puede ver trazabilidad de todos los proyectos)
+        $esAuditor = $usuario->hasRole('Auditor') || $usuario->hasRole('auditor');
+        
+        // Si es Auditor, permitir acceso directo sin más verificaciones
+        if (!$esAuditor) {
+            // Verificar si el usuario tiene acceso al proyecto
+            if (!$proyecto->usuarioTieneAcceso($usuario)) {
+                return redirect()->route('proyectos.index')
+                    ->with('error', 'No tienes acceso a este proyecto.');
+            }
+
+            // Verificar si es colaborador del proyecto (incluye líder, colaborador, visor, y Lector)
+            $esColaborador = $proyecto->usuarios()
+                ->where('users.id', $usuario->id)
+                ->wherePivot('estado_invitacion', 'aceptada')
+                ->exists();
+
+            // Verificar si es líder del proyecto
+            $esLiderProyecto = $proyecto->usuarios()
+                ->wherePivot('rol_proyecto', 'lider')
+                ->where('users.id', $usuario->id)
+                ->exists();
+
+            // Verificar si es líder del departamento
+            $esLiderDepartamento = $proyecto->departamento 
+    && $proyecto->departamento->lider_id === $usuario->id;
+
+            // Permitir ver trazabilidad si es colaborador, líder del proyecto o líder del departamento
+            if (! $esColaborador && ! $esLiderProyecto && ! $esLiderDepartamento) {
+                return redirect()->route('proyectos.index')
+                    ->with('error', 'No tienes permisos para ver la trazabilidad de este proyecto.');
+            }
         }
 
         $trazas = Trazabilidad::where('proyecto_id', $proyecto->id)

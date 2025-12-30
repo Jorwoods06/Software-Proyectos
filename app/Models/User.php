@@ -63,10 +63,17 @@ class User extends Model
         return $fromRoles->merge($this->permisosDirectos)->unique('id');
     }
     
-    // comprobar rol
+    // comprobar rol (case-insensitive)
     public function hasRole($rolNombre)
     {
-        return $this->roles->contains('nombre', $rolNombre);
+        if (!$this->relationLoaded('roles')) {
+            $this->load('roles');
+        }
+        
+        // Comparación case-insensitive
+        return $this->roles->contains(function ($rol) use ($rolNombre) {
+            return strtolower($rol->nombre) === strtolower($rolNombre);
+        });
     }
 
     // obtener todos los permisos a través de roles

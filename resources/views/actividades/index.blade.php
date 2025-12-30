@@ -1647,7 +1647,13 @@
 </style>
 
 @php
-    $auth_user = \App\Models\User::with('roles')->find(session('user_id'));
+    $auth_user = \App\Models\User::with(['roles.permisos', 'permisosDirectos'])->find(session('user_id'));
+    $puedeComentar = $auth_user && $auth_user->hasPermission('comentar tarea');
+    $esLector = $auth_user && ($auth_user->hasRole('Lector') || $auth_user->hasRole('lector'));
+    $esAuditor = $auth_user && ($auth_user->hasRole('Auditor') || $auth_user->hasRole('auditor'));
+    $puedeEliminarEvidencias = !$esLector && !$esAuditor;
+    $puedeSubirEvidencias = !$esLector && !$esAuditor;
+    $puedeModificar = !$esAuditor; // Los Auditores no pueden modificar nada
 @endphp
 
 <div class="container">
@@ -1662,10 +1668,12 @@
         </div>
         <div class="header-actions">
             @permiso('crear actividades')
+            @if($puedeModificar)
             <button type="button" class="btn-action btn-add-activity" data-bs-toggle="modal" data-bs-target="#modalCrearActividad">
                 <i class="bi bi-plus-lg"></i>
                 <span class="d-none d-md-inline">Agregar Fase</span>
             </button>
+            @endif
             @endpermiso
         </div>
     </div>
@@ -1754,14 +1762,18 @@
                         </div>
                         @php
                             $totalTareas = $actividad->tareas_count ?? 0;
-                            $tareasCompletadas = $totalTareas > 0 ? $totalTareas - ($actividad->tareas_pendientes ?? 0) : 0;
-                            $porcentaje = $totalTareas > 0 ? round(($tareasCompletadas / $totalTareas) * 100, 1) : 0;
+                            // Contar tareas por estado
+                            $tareasCompletadas = $actividad->tareas()->where('estado', 'completado')->count();
+                            $tareasEnProgreso = $actividad->tareas()->where('estado', 'en_progreso')->count();
+                            // Calcular puntos: completadas = 1, en progreso = 0.5
+                            $puntosTotales = ($tareasCompletadas * 1) + ($tareasEnProgreso * 0.5);
+                            $porcentaje = $totalTareas > 0 ? round(($puntosTotales / $totalTareas) * 100) : 0;
                             $claseProgreso = $porcentaje == 100 ? 'completed' : ($porcentaje >= 50 ? '' : 'warning');
                         @endphp
                         @if($totalTareas > 0)
                         <div class="fase-progress">
                             <div class="fase-progress-info">
-                                <span>{{ $tareasCompletadas }} de {{ $totalTareas }} tareas completadas</span>
+                                <span>{{ $tareasCompletadas }} completadas, {{ $tareasEnProgreso }} en progreso de {{ $totalTareas }} tareas</span>
                                 <span class="fase-progress-percentage">{{ $porcentaje }}%</span>
                             </div>
                             <div class="fase-progress-bar-container">
@@ -1772,7 +1784,7 @@
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-2" onclick="event.stopPropagation();">
-                    @if($puedeGestionar)
+                    @if($puedeGestionar && $puedeModificar)
                         <button type="button" 
                                 class="btn btn-sm btn-outline-primary" 
                                 onclick="editarActividad({{ $actividad->id }})"
@@ -1808,11 +1820,13 @@
 
                 {{-- Botón/Enlace para agregar tarea --}}
                 @permiso('crear tarea')
+                @if($puedeModificar)
                 <div class="py-2 border-top">
                     <button type="button" class="btn btn-link text-primary text-decoration-none p-0 fw-medium" onclick="mostrarFormTarea({{ $actividad->id }})">
                         <i class="bi bi-plus-lg me-1"></i> Agregar Tarea a {{ $actividad->nombre }}
                     </button>
                 </div>
+                @endif
 
                 {{-- Formulario para crear tarea (oculto por defecto) --}}
                 <div class="form-crear-tarea py-2 border-top" id="form-tarea-{{ $actividad->id }}" style="display: none;">
@@ -1851,15 +1865,26 @@
                             </div>
 
                             @if($colaboradores && $colaboradores->count() > 0)
+                            @php
+                                $colaboradoresConPermiso = $colaboradores->filter(function($colaborador) {
+                                    $usuario = \App\Models\User::with(['roles.permisos', 'permisosDirectos'])->find($colaborador->id);
+                                    if (!$usuario) return false;
+                                    // Excluir usuarios con rol Lector o Auditor
+                                    return !$usuario->hasRole('Lector') && !$usuario->hasRole('lector')
+                                        && !$usuario->hasRole('Auditor') && !$usuario->hasRole('auditor');
+                                });
+                            @endphp
+                            @if($colaboradoresConPermiso->count() > 0)
                             <div class="col-12">
                                 <label class="form-label small">Asignar a colaboradores</label>
                                 <select name="usuarios[]" class="form-select form-select-sm" multiple size="3">
-                                    @foreach($colaboradores as $colaborador)
+                                    @foreach($colaboradoresConPermiso as $colaborador)
                                         <option value="{{ $colaborador->id }}">{{ $colaborador->nombre }}</option>
                                     @endforeach
                                 </select>
                                 <small class="text-muted">Mantenga presionado Ctrl/Cmd para seleccionar múltiples</small>
                             </div>
+                            @endif
                             @endif
 
                             <div class="col-12">
@@ -2183,15 +2208,26 @@
                         </div>
                     </div>
                     @if(isset($colaboradores) && $colaboradores && $colaboradores->count() > 0)
+                    @php
+                        $colaboradoresConPermiso = $colaboradores->filter(function($colaborador) {
+                            $usuario = \App\Models\User::with(['roles.permisos', 'permisosDirectos'])->find($colaborador->id);
+                            if (!$usuario) return false;
+                            // Excluir usuarios con rol Lector o Auditor
+                            return !$usuario->hasRole('Lector') && !$usuario->hasRole('lector')
+                                && !$usuario->hasRole('Auditor') && !$usuario->hasRole('auditor');
+                        });
+                    @endphp
+                    @if($colaboradoresConPermiso->count() > 0)
                     <div class="mb-3">
                         <label class="form-label">Asignar a colaboradores</label>
                         <select name="usuarios[]" id="edit-tarea-usuarios" class="form-select" multiple size="4">
-                            @foreach($colaboradores as $colaborador)
+                            @foreach($colaboradoresConPermiso as $colaborador)
                                 <option value="{{ $colaborador->id }}">{{ $colaborador->nombre }}</option>
                             @endforeach
                         </select>
                         <small class="text-muted">Mantenga presionado Ctrl/Cmd para seleccionar múltiples</small>
                     </div>
+                    @endif
                     @endif
                 </div>
                 <div class="modal-footer">
@@ -2887,6 +2923,8 @@ function crearModalError() {
 // ============================================
 
 let tareaActualId = null;
+// Variable global para permisos de evidencias
+const puedeEliminarEvidenciasGlobal = {{ $puedeEliminarEvidencias ? 'true' : 'false' }};
 
 function abrirPanelEvidenciasTarea(tareaId) {
     tareaActualId = tareaId;
@@ -2922,6 +2960,10 @@ function renderizarPanelEvidenciasTarea(tareaId) {
     cargarDescripcionTarea(tareaId);
     cargarComentariosTarea(tareaId);
     
+    // Verificar si el usuario puede comentar y subir evidencias (desde PHP)
+    const puedeComentar = {{ $puedeComentar ? 'true' : 'false' }};
+    const puedeSubirEvidencias = {{ $puedeSubirEvidencias ? 'true' : 'false' }};
+    
     let html = `
         <div class="panel-evidencias-tarea-section">
             <h5><i class="bi bi-file-text"></i> Descripción</h5>
@@ -2953,6 +2995,7 @@ function renderizarPanelEvidenciasTarea(tareaId) {
                     <p>Cargando comentarios...</p>
                 </div>
             </div>
+            @if($puedeComentar)
             <div class="form-comentario-tarea">
                 <div class="comentario-input-wrapper">
                     <input type="text" 
@@ -2973,6 +3016,11 @@ function renderizarPanelEvidenciasTarea(tareaId) {
                     Agregar Comentario <i class="bi bi-arrow-right"></i>
                 </button>
             </div>
+            @else
+            <div class="alert alert-info mt-3">
+                <i class="bi bi-info-circle"></i> No tienes permiso para comentar en tareas.
+            </div>
+            @endif
         </div>
         
         <div class="panel-evidencias-tarea-section">
@@ -2982,6 +3030,7 @@ function renderizarPanelEvidenciasTarea(tareaId) {
                     <p>Cargando evidencias...</p>
                 </div>
             </div>
+            ${puedeSubirEvidencias ? `
             <div class="form-evidencia-tarea">
                 <div class="drop-zone" 
                      id="drop-zone-tarea"
@@ -2999,6 +3048,11 @@ function renderizarPanelEvidenciasTarea(tareaId) {
                        accept=".svg,.png,.jpg,.jpeg,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.gif,.webp"
                        onchange="handleFileSelect(event)">
             </div>
+            ` : `
+            <div class="alert alert-info mt-3">
+                <i class="bi bi-info-circle"></i> No tienes permiso para subir evidencias. Solo puedes ver las evidencias existentes.
+            </div>
+            `}
         </div>
     `;
     
@@ -3261,19 +3315,28 @@ function handleFileSelect(event) {
 function handleDragOver(event) {
     event.preventDefault();
     event.stopPropagation();
-    document.getElementById('drop-zone-tarea').classList.add('dragover');
+    const dropZone = document.getElementById('drop-zone-tarea');
+    if (dropZone) {
+        dropZone.classList.add('dragover');
+    }
 }
 
 function handleDragLeave(event) {
     event.preventDefault();
     event.stopPropagation();
-    document.getElementById('drop-zone-tarea').classList.remove('dragover');
+    const dropZone = document.getElementById('drop-zone-tarea');
+    if (dropZone) {
+        dropZone.classList.remove('dragover');
+    }
 }
 
 function handleDrop(event) {
     event.preventDefault();
     event.stopPropagation();
-    document.getElementById('drop-zone-tarea').classList.remove('dragover');
+    const dropZone = document.getElementById('drop-zone-tarea');
+    if (dropZone) {
+        dropZone.classList.remove('dragover');
+    }
     
     const files = event.dataTransfer.files;
     if (files.length > 0) {
@@ -3284,6 +3347,13 @@ function handleDrop(event) {
 function procesarArchivo(file) {
     if (!tareaActualId) {
         console.error('No hay tarea seleccionada');
+        return;
+    }
+
+    // Verificar si el usuario puede subir evidencias
+    const puedeSubirCheck = {{ $puedeSubirEvidencias ? 'true' : 'false' }};
+    if (!puedeSubirCheck) {
+        alert('No tienes permiso para subir evidencias. Los usuarios con rol Lector o Auditor solo pueden ver evidencias.');
         return;
     }
 
@@ -3468,12 +3538,14 @@ function mostrarEvidenciasTarea(evidencias) {
             ${contenidoEvidencia}
             <div class="evidencia-acciones">
                 ${botonAccion}
+                ${puedeEliminarEvidenciasGlobal ? `
                 <button type="button" 
                         class="btn btn-sm btn-outline-danger" 
                         onclick="eliminarEvidenciaTarea(${evidencia.id})"
                         title="Eliminar">
                     <i class="bi bi-trash"></i> Eliminar
                 </button>
+                ` : ''}
             </div>
         `;
         

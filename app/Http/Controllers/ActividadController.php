@@ -130,6 +130,18 @@ class ActividadController extends Controller
 
     public function store(Request $request)
     {
+        // Verificar que el usuario no sea Auditor
+        $auth_user = User::with('roles')->find(session('user_id'));
+        if ($auth_user && ($auth_user->hasRole('Auditor') || $auth_user->hasRole('auditor'))) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Los usuarios con rol Auditor no pueden crear fases. Solo tienen permisos de lectura.'
+                ], 403);
+            }
+            return back()->with('error', 'Los usuarios con rol Auditor no pueden crear fases. Solo tienen permisos de lectura.');
+        }
+
         $data = $request->validate([
             'proyecto_id' => 'required|exists:proyectos,id',
             'nombre' => 'required|string|max:255',
@@ -151,6 +163,17 @@ class ActividadController extends Controller
         $actividad = Actividad::findOrFail($id);
         $proyecto = $actividad->proyecto;
         $auth_user = User::with('roles')->find(session('user_id'));
+
+        // Verificar que el usuario no sea Auditor
+        if ($auth_user && ($auth_user->hasRole('Auditor') || $auth_user->hasRole('auditor'))) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Los usuarios con rol Auditor no pueden editar fases. Solo tienen permisos de lectura.'
+                ], 403);
+            }
+            abort(403, 'Los usuarios con rol Auditor no pueden editar fases. Solo tienen permisos de lectura.');
+        }
 
         // Validar permisos: Administrador, TI o creador del proyecto
         if (!$proyecto->puedeGestionarActividadesYTareas($auth_user)) {
@@ -178,6 +201,11 @@ class ActividadController extends Controller
         $actividad = Actividad::findOrFail($id);
         $proyecto = $actividad->proyecto;
         $auth_user = User::with('roles')->find(session('user_id'));
+
+        // Verificar que el usuario no sea Auditor
+        if ($auth_user && ($auth_user->hasRole('Auditor') || $auth_user->hasRole('auditor'))) {
+            abort(403, 'Los usuarios con rol Auditor no pueden eliminar fases. Solo tienen permisos de lectura.');
+        }
 
         // Validar permisos: Administrador, TI o creador del proyecto
         if (!$proyecto->puedeGestionarActividadesYTareas($auth_user)) {

@@ -294,15 +294,22 @@
                             </td>
                             <td>
                                 <div class="acciones-cell">
+                                    @php
+                                        $auth_user = \App\Models\User::with('roles')->find(session('user_id'));
+                                        $esAuditor = $auth_user && ($auth_user->hasRole('Auditor') || $auth_user->hasRole('auditor'));
+                                    @endphp
                                     @permiso('editar proyecto')
+                                        @if(!$esAuditor)
                                         <a href="{{ route('proyectos.edit', $proyecto->id) }}" 
                                            class="btn btn-sm btn-warning btn-accion" 
                                            data-bs-toggle="tooltip" 
                                            title="Editar proyecto">
                                             <i class="bi bi-pencil"></i>
                                         </a>
+                                        @endif
                                     @endpermiso
                                     @permiso('eliminar proyecto')
+                                        @if(!$esAuditor)
                                         <form action="{{ route('proyectos.destroy', $proyecto->id) }}" 
                                               method="POST" 
                                               class="d-inline" 
@@ -316,6 +323,7 @@
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
+                                        @endif
                                     @endpermiso
                                     @permiso('invitar usuarios a este proyecto', ['proyecto' => $proyecto])
                                         <button class="btn btn-sm btn-info btn-accion btn-invitar" 
@@ -326,7 +334,19 @@
                                             <i class="bi bi-person-plus"></i>
                                         </button>
                                     @endpermiso
-                                    @if ($auth_user && validacionExtra($auth_user, ['proyecto' => $proyecto]))
+                                    @php
+                                        // Verificar si el usuario es Auditor o pasa la validación extra
+                                        $puedeVerTrazabilidad = false;
+                                        if ($auth_user) {
+                                            // Asegurar que los roles estén cargados
+                                            if (!$auth_user->relationLoaded('roles')) {
+                                                $auth_user->load('roles');
+                                            }
+                                            $esAuditor = $auth_user->hasRole('Auditor') || $auth_user->hasRole('auditor');
+                                            $puedeVerTrazabilidad = $esAuditor || validacionExtra($auth_user, ['proyecto' => $proyecto]);
+                                        }
+                                    @endphp
+                                    @if ($auth_user && $puedeVerTrazabilidad)
                                         <a href="{{ route('proyectos.trazabilidad', $proyecto->id) }}" 
                                            class="btn btn-sm btn-secondary btn-accion" 
                                            data-bs-toggle="tooltip" 

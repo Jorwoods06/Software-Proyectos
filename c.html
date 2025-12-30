@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Fase de Proyecto</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    * {
+  box-sizing: border-box;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+body {
+  background: #f5f7fb;
+  padding: 40px;
+}
+
+.phase-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 24px 26px;
+  max-width: 800px;
+  box-shadow: 0 10px 25px rgba(0,0,0,.06);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.phase-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(0,0,0,.08);
+}
+
+/* HEADER */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.card-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.meta {
+  margin-top: 6px;
+  font-size: .9rem;
+  color: #6b7280;
+}
+
+/* ACTIONS */
+.actions {
+  display: flex;
+  gap: 6px;
+}
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #6b7280;
+  transition: background .2s, color .2s;
+}
+
+.icon-btn:hover {
+  background: #eef2ff;
+  color: #2563eb;
+}
+
+.icon-btn.danger:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* PROGRESS */
+.progress-section {
+  margin-top: 22px;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: .9rem;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.percentage {
+  font-weight: 600;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 10px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #2563eb, #3b82f6);
+  border-radius: 999px;
+  transition: width .6s ease;
+}
+
+  </style>
+</head>
+<body>
+
+  <div class="phase-card">
+    <div class="card-header">
+      <div>
+        <h2>Fase 1 · Pruebas</h2>
+        <p class="meta">Creado el 13 Dic 2025 · <span>1 tarea pendiente</span></p>
+      </div>
+
+      <div class="actions">
+        <button class="icon-btn"><i class="fa-solid fa-pen"></i></button>
+        <button class="icon-btn danger"><i class="fa-solid fa-trash"></i></button>
+        <button class="icon-btn"><i class="fa-solid fa-chevron-down"></i></button>
+      </div>
+    </div>
+
+    <div class="progress-section">
+      <div class="progress-info">
+        <span>8 de 9 tareas completadas</span>
+        <span class="percentage">88.9%</span>
+      </div>
+
+      <div class="progress-bar">
+        <div class="progress-fill" data-progress="88.9"></div>
+      </div>
+    </div>
+  </div>
+
+  <script >
+    document.addEventListener("DOMContentLoaded", () => {
+  const progress = document.querySelector(".progress-fill");
+  const value = progress.dataset.progress;
+  progress.style.width = value + "%";
+});
+
+  </script>
+</body>
+</html>

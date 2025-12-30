@@ -152,11 +152,21 @@ class Proyecto extends Model
     {
         if (!$user) return false;
         $userId = $user instanceof \App\Models\User ? $user->id : (int) $user;
-        $userModel = $user instanceof \App\Models\User ? $user : \App\Models\User::find($userId);
+        $userModel = $user instanceof \App\Models\User ? $user : \App\Models\User::with('roles')->find($userId);
         if (!$userModel) return false;
+
+        // Asegurar que los roles estén cargados
+        if (!$userModel->relationLoaded('roles')) {
+            $userModel->load('roles');
+        }
 
         // Administrador o TI tienen acceso completo
         if ($userModel->hasRole('Administrador') || $userModel->hasRole('admin') || $userModel->hasRole('TI')) {
+            return true;
+        }
+
+        // Auditor puede ver todos los proyectos (solo lectura)
+        if ($userModel->hasRole('Auditor') || $userModel->hasRole('auditor')) {
             return true;
         }
 
@@ -262,13 +272,25 @@ class Proyecto extends Model
         return collect([]);
     }
     
-    // Verificar si el usuario es Administrador o TI (pueden ver todos los proyectos)
-    $esAdmin = $usuario->hasRole('Administrador') || $usuario->hasRole('admin') || $usuario->hasRole('TI');
+    // Verificar directamente en la base de datos si el usuario tiene rol Admin, TI o Auditor
+    // Esto es más confiable que confiar solo en relaciones cargadas
+    $rolesUsuario = DB::table('user_role')
+        ->join('roles', 'user_role.rol_id', '=', 'roles.id')
+        ->where('user_role.user_id', $userId)
+        ->pluck('roles.nombre')
+        ->map(function($nombre) {
+            return strtolower($nombre);
+        })
+        ->toArray();
+    
+    $esAdmin = in_array('administrador', $rolesUsuario) || in_array('admin', $rolesUsuario) || in_array('ti', $rolesUsuario);
+    $esAuditor = in_array('auditor', $rolesUsuario);
     
     $query = static::where('estado', '!=', 'cancelado');
     
-    // Si es administrador, puede ver todos los proyectos
-    if (!$esAdmin) {
+    // Si es administrador o auditor, puede ver todos los proyectos (sin aplicar filtros)
+    // Esta es la misma lógica que usa el admin
+    if (!$esAdmin && !$esAuditor) {
         $query->where(function ($query) use ($userId) {
             // El usuario es el creador del proyecto
             $query->where('created_by', $userId)
@@ -287,8 +309,19 @@ class Proyecto extends Model
     /** Obtener proyectos visibles para un usuario */
     public static function obtenerVisiblesPorUsuario(User $usuario)
 {
-    // Verificar si el usuario es Administrador o TI (pueden ver todos los proyectos)
-    $esAdmin = $usuario->hasRole('Administrador') || $usuario->hasRole('admin') || $usuario->hasRole('TI');
+    // Verificar directamente en la base de datos si el usuario tiene rol Admin, TI o Auditor
+    // Esto es más confiable que confiar solo en relaciones cargadas
+    $rolesUsuario = DB::table('user_role')
+        ->join('roles', 'user_role.rol_id', '=', 'roles.id')
+        ->where('user_role.user_id', $usuario->id)
+        ->pluck('roles.nombre')
+        ->map(function($nombre) {
+            return strtolower($nombre);
+        })
+        ->toArray();
+    
+    $esAdmin = in_array('administrador', $rolesUsuario) || in_array('admin', $rolesUsuario) || in_array('ti', $rolesUsuario);
+    $esAuditor = in_array('auditor', $rolesUsuario);
     
     $query = static::with([
         'colaboradores' => function ($q) {
@@ -297,8 +330,9 @@ class Proyecto extends Model
     ])
     ->where('estado', '!=', 'cancelado');
     
-    // Si es administrador, puede ver todos los proyectos
-    if (!$esAdmin) {
+    // Si es administrador o auditor, puede ver todos los proyectos (sin aplicar filtros)
+    // Esta es la misma lógica que usa el admin - simplemente no aplicamos el where adicional
+    if (!$esAdmin && !$esAuditor) {
         $query->where(function ($query) use ($usuario) {
             // El usuario es el creador del proyecto
             $query->where('created_by', $usuario->id)

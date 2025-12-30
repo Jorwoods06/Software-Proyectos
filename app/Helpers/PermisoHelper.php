@@ -74,8 +74,21 @@ if (! function_exists('usuarioTienePermiso')) {
 if (! function_exists('validacionExtra')) {
     function validacionExtra(User $usuario, array $opciones): bool
 {
+    // Asegurar que los roles estén cargados
+    if (!$usuario->relationLoaded('roles')) {
+        $usuario->load('roles');
+    }
+
+    // Verificar si el usuario es Auditor (puede ver trazabilidad de todos los proyectos)
+    $esAuditor = $usuario->hasRole('Auditor') || $usuario->hasRole('auditor');
+    
     if (isset($opciones['proyecto']) && $opciones['proyecto'] instanceof Proyecto) {
         $proyecto = $opciones['proyecto'];
+
+        // Si es Auditor, permitir acceso a todos los proyectos
+        if ($esAuditor) {
+            return true;
+        }
 
         // líder del proyecto
         $esLiderProyecto = $proyecto->usuarios()

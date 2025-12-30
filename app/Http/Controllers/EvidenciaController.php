@@ -30,6 +30,19 @@ class EvidenciaController extends Controller
      */
     public function store(Request $request, $tareaId)
     {
+        // Verificar que el usuario no tenga rol Lector o Auditor
+        $userId = session('user_id');
+        if ($userId) {
+            $usuario = \App\Models\User::with(['roles.permisos', 'permisosDirectos'])->find($userId);
+            if ($usuario && (($usuario->hasRole('Lector') || $usuario->hasRole('lector'))
+                || ($usuario->hasRole('Auditor') || $usuario->hasRole('auditor')))) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No tienes permisos para subir evidencias. Los usuarios con rol Lector o Auditor solo pueden ver evidencias.'
+                ], 403);
+            }
+        }
+
         // Validar que la tarea existe
         $tarea = Tarea::find($tareaId);
         if (!$tarea) {
@@ -298,6 +311,19 @@ class EvidenciaController extends Controller
                 'success' => false,
                 'message' => 'La evidencia no existe.'
             ], 404);
+        }
+
+        // Verificar que el usuario no tenga rol Lector o Auditor
+        $userId = session('user_id');
+        if ($userId) {
+            $usuario = \App\Models\User::with(['roles.permisos', 'permisosDirectos'])->find($userId);
+            if ($usuario && (($usuario->hasRole('Lector') || $usuario->hasRole('lector'))
+                || ($usuario->hasRole('Auditor') || $usuario->hasRole('auditor')))) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No tienes permisos para eliminar evidencias. Los usuarios con rol Lector o Auditor solo pueden ver evidencias.'
+                ], 403);
+            }
         }
 
         // Obtener la evidencia para eliminar el archivo

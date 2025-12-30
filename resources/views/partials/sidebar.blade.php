@@ -140,23 +140,25 @@
     }
 
     .submenu-toggle {
-        background: none;
+        background: rgba(206, 219, 236, 0.2);
         border: none;
         color: rgba(255, 255, 255, 0.86);
         cursor: pointer;
-        padding: 0;
+        padding: 0.375rem;
         margin-left: auto;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: color 0.2s ease, transform 0.3s ease;
+        transition: all 0.2s ease, transform 0.3s ease;
         font-size: 0.8rem;
         flex-shrink: 0;
-        width: 20px;
-        height: 20px;
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
     }
 
     .submenu-toggle:hover {
+       
         color: #ffffff;
     }
 
@@ -548,13 +550,24 @@ $auth_user = \App\Models\User::with('roles')
 // Obtener proyectos del usuario autenticado
 $proyectos = collect([]);
 if ($auth_user) {
-    // Verificar si el usuario es Administrador o TI (pueden ver todos los proyectos)
-    $esAdmin = $auth_user->hasRole('Administrador') || $auth_user->hasRole('admin') || $auth_user->hasRole('TI');
+    // Verificar directamente en la base de datos si el usuario tiene rol Admin, TI o Auditor
+    $rolesUsuario = \Illuminate\Support\Facades\DB::table('user_role')
+        ->join('roles', 'user_role.rol_id', '=', 'roles.id')
+        ->where('user_role.user_id', $auth_user->id)
+        ->pluck('roles.nombre')
+        ->map(function($nombre) {
+            return strtolower($nombre);
+        })
+        ->toArray();
+    
+    $esAdmin = in_array('administrador', $rolesUsuario) || in_array('admin', $rolesUsuario) || in_array('ti', $rolesUsuario);
+    $esAuditor = in_array('auditor', $rolesUsuario);
     
     $query = \App\Models\Proyecto::where('estado', '!=', 'cancelado');
     
-    // Si es administrador, puede ver todos los proyectos
-    if (!$esAdmin) {
+    // Si es administrador o auditor, puede ver todos los proyectos (sin filtros)
+    // Esta es la misma lógica que usa el admin
+    if (!$esAdmin && !$esAuditor) {
         $query->where(function ($query) use ($auth_user) {
             // El usuario es el creador del proyecto
             $query->where('created_by', $auth_user->id)

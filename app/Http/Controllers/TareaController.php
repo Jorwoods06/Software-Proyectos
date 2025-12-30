@@ -7,6 +7,7 @@ use App\Models\Actividad;
 use App\Models\Proyecto;
 use App\Models\User;
 use App\Models\Comentario;
+use App\Models\Trazabilidad;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
@@ -20,6 +21,18 @@ class TareaController extends Controller
 
     public function store(Request $request)
     {
+        // Verificar que el usuario no sea Auditor
+        $auth_user = User::with('roles')->find(session('user_id'));
+        if ($auth_user && ($auth_user->hasRole('Auditor') || $auth_user->hasRole('auditor'))) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Los usuarios con rol Auditor no pueden crear tareas. Solo tienen permisos de lectura.'
+                ], 403);
+            }
+            return back()->with('error', 'Los usuarios con rol Auditor no pueden crear tareas. Solo tienen permisos de lectura.');
+        }
+
         $data = $request->validate([
             'actividad_id' => 'nullable|exists:actividades,id',
             'nombre' => 'required|string|max:150',
@@ -46,9 +59,42 @@ class TareaController extends Controller
                 }
             }
 
+            // Filtrar usuarios con rol Lector (no pueden recibir tareas)
+            if (!empty($data['usuarios'])) {
+                $usuariosValidos = [];
+                foreach ($data['usuarios'] as $userId) {
+                    $usuario = User::with(['roles.permisos', 'permisosDirectos'])->find($userId);
+                    if ($usuario) {
+                        // Excluir usuarios con rol Lector
+                        if (!$usuario->hasRole('Lector') && !$usuario->hasRole('lector')) {
+                            $usuariosValidos[] = $userId;
+                        }
+                    }
+                }
+                $data['usuarios'] = $usuariosValidos;
+            }
+
             // Preparar datos para la tarea usando método del modelo
             $tareaData = Tarea::prepararDatosCreacion($data, session('user_id'));
             $tarea = Tarea::crearConUsuarios($tareaData, $data['usuarios'] ?? null);
+            
+            // Registrar trazabilidad si la tarea pertenece a una actividad/proyecto
+            if ($tarea && !empty($data['actividad_id'])) {
+                $actividad = Actividad::find($data['actividad_id']);
+                if ($actividad && $actividad->proyecto_id) {
+                    $usuariosAsignados = !empty($data['usuarios']) 
+                        ? User::whereIn('id', $data['usuarios'])->pluck('nombre')->implode(', ')
+                        : 'Ninguno';
+                    
+                    Trazabilidad::create([
+                        'proyecto_id' => $actividad->proyecto_id,
+                        'user_id' => session('user_id'),
+                        'accion' => "Creó la tarea: {$tarea->nombre}",
+                        'detalle' => "Fase: {$actividad->nombre}\nPrioridad: " . ($tarea->prioridad ?? 'media') . "\nEstado: " . ($tarea->estado ?? 'pendiente') . "\nUsuarios asignados: {$usuariosAsignados}",
+                        'fecha' => now()
+                    ]);
+                }
+            }
             
             // Enviar notificaciones a usuarios asignados
             if (!empty($data['usuarios']) && $tarea) {
@@ -66,6 +112,17 @@ class TareaController extends Controller
     {
         $tarea = Tarea::findOrFail($id);
         $auth_user = User::with('roles')->find(session('user_id'));
+
+        // Verificar que el usuario no sea Auditor
+        if ($auth_user && ($auth_user->hasRole('Auditor') || $auth_user->hasRole('auditor'))) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Los usuarios con rol Auditor no pueden editar tareas. Solo tienen permisos de lectura.'
+                ], 403);
+            }
+            abort(403, 'Los usuarios con rol Auditor no pueden editar tareas. Solo tienen permisos de lectura.');
+        }
 
         // Validar permisos si la tarea pertenece a una actividad
         if ($tarea->actividad_id) {
@@ -90,8 +147,32 @@ class TareaController extends Controller
         ]);
 
         try {
-            // Obtener usuarios asignados antes de actualizar
+            // Filtrar usuarios con rol Lector o Auditor (no pueden recibir tareas)
+            if (!empty($data['usuarios'])) {
+                $usuariosValidos = [];
+                foreach ($data['usuarios'] as $userId) {
+                    $usuario = User::with(['roles.permisos', 'permisosDirectos'])->find($userId);
+                    if ($usuario) {
+                        // Excluir usuarios con rol Lector o Auditor
+                        if (!$usuario->hasRole('Lector') && !$usuario->hasRole('lector')
+                            && !$usuario->hasRole('Auditor') && !$usuario->hasRole('auditor')) {
+                            $usuariosValidos[] = $userId;
+                        }
+                    }
+                }
+                $data['usuarios'] = $usuariosValidos;
+            }
+
+            // Guardar valores anteriores para trazabilidad
+            $valoresAnteriores = [
+                'nombre' => $tarea->nombre,
+                'descripcion' => $tarea->descripcion,
+                'fecha_fin' => $tarea->fecha_fin ? $tarea->fecha_fin->format('Y-m-d H:i') : null,
+                'prioridad' => $tarea->prioridad,
+                'estado' => $tarea->estado,
+            ];
             $usuariosAnteriores = $tarea->usuariosAsignados->pluck('id')->toArray();
+            $nombresUsuariosAnteriores = $tarea->usuariosAsignados->pluck('nombre')->implode(', ') ?: 'Ninguno';
             
             // Preparar datos usando método del modelo
             $data = $tarea->prepararDatosActualizacion($data);
@@ -100,6 +181,46 @@ class TareaController extends Controller
             // Recargar la tarea para obtener los nuevos usuarios asignados
             $tarea->refresh();
             $usuariosNuevos = $tarea->usuariosAsignados->pluck('id')->toArray();
+            $nombresUsuariosNuevos = $tarea->usuariosAsignados->pluck('nombre')->implode(', ') ?: 'Ninguno';
+            
+            // Registrar trazabilidad si la tarea pertenece a una actividad/proyecto
+            if ($tarea->actividad_id) {
+                $actividad = $tarea->actividad;
+                if ($actividad && $actividad->proyecto_id) {
+                    $cambios = [];
+                    
+                    // Detectar cambios comparando valores anteriores con los nuevos de la tarea actualizada
+                    if ($valoresAnteriores['nombre'] != $tarea->nombre) {
+                        $cambios[] = "Nombre: '{$valoresAnteriores['nombre']}' → '{$tarea->nombre}'";
+                    }
+                    if ($valoresAnteriores['descripcion'] != ($tarea->descripcion ?? '')) {
+                        $cambios[] = "Descripción modificada";
+                    }
+                    $fechaNueva = $tarea->fecha_fin ? $tarea->fecha_fin->format('Y-m-d H:i') : null;
+                    if ($valoresAnteriores['fecha_fin'] != $fechaNueva) {
+                        $cambios[] = "Fecha fin: '" . ($valoresAnteriores['fecha_fin'] ?? 'Sin fecha') . "' → '" . ($fechaNueva ?? 'Sin fecha') . "'";
+                    }
+                    if ($valoresAnteriores['prioridad'] != $tarea->prioridad) {
+                        $cambios[] = "Prioridad: '{$valoresAnteriores['prioridad']}' → '{$tarea->prioridad}'";
+                    }
+                    if ($valoresAnteriores['estado'] != $tarea->estado) {
+                        $cambios[] = "Estado: '{$valoresAnteriores['estado']}' → '{$tarea->estado}'";
+                    }
+                    if ($nombresUsuariosAnteriores != $nombresUsuariosNuevos) {
+                        $cambios[] = "Usuarios asignados: '{$nombresUsuariosAnteriores}' → '{$nombresUsuariosNuevos}'";
+                    }
+                    
+                    if (!empty($cambios)) {
+                        Trazabilidad::create([
+                            'proyecto_id' => $actividad->proyecto_id,
+                            'user_id' => session('user_id'),
+                            'accion' => "Editó la tarea: {$tarea->nombre}",
+                            'detalle' => "Fase: {$actividad->nombre}\n" . implode("\n", $cambios),
+                            'fecha' => now()
+                        ]);
+                    }
+                }
+            }
             
             // Enviar notificaciones solo a usuarios nuevos
             if (!empty($data['usuarios'])) {
@@ -124,11 +245,29 @@ class TareaController extends Controller
     public function toggleCompletada(Request $request, $id)
     {
         $tarea = Tarea::findOrFail($id);
+        $estadoAnterior = $tarea->estado;
         $tarea->toggleCompletada();
+        $tarea->refresh();
 
         $mensaje = $tarea->estaCompletada() 
             ? 'Tarea marcada como completada.' 
             : 'Tarea marcada como pendiente.';
+
+        // Registrar trazabilidad si la tarea pertenece a una actividad/proyecto
+        if ($tarea->actividad_id) {
+            $actividad = $tarea->actividad;
+            if ($actividad && $actividad->proyecto_id) {
+                Trazabilidad::create([
+                    'proyecto_id' => $actividad->proyecto_id,
+                    'user_id' => session('user_id'),
+                    'accion' => $tarea->estaCompletada() 
+                        ? "Completó la tarea: {$tarea->nombre}"
+                        : "Marcó como pendiente la tarea: {$tarea->nombre}",
+                    'detalle' => "Fase: {$actividad->nombre}\nEstado anterior: {$estadoAnterior}\nEstado nuevo: {$tarea->estado}",
+                    'fecha' => now()
+                ]);
+            }
+        }
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -171,8 +310,23 @@ class TareaController extends Controller
             return back()->with('error', 'No tienes permisos para cambiar el estado de esta tarea.');
         }
 
+        $estadoAnterior = $tarea->estado;
         $tarea->update(['estado' => $data['estado']]);
         $tarea->refresh();
+
+        // Registrar trazabilidad si la tarea pertenece a una actividad/proyecto
+        if ($tarea->actividad_id && $estadoAnterior != $data['estado']) {
+            $actividad = $tarea->actividad;
+            if ($actividad && $actividad->proyecto_id) {
+                Trazabilidad::create([
+                    'proyecto_id' => $actividad->proyecto_id,
+                    'user_id' => $userId,
+                    'accion' => "Cambió el estado de la tarea: {$tarea->nombre}",
+                    'detalle' => "Fase: {$actividad->nombre}\nEstado anterior: {$estadoAnterior}\nEstado nuevo: {$data['estado']}",
+                    'fecha' => now()
+                ]);
+            }
+        }
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -216,9 +370,27 @@ class TareaController extends Controller
             return back()->with('error', 'No tienes permisos para cambiar la fecha de esta tarea.');
         }
 
+        $fechaAnterior = $tarea->fecha_fin ? $tarea->fecha_fin->format('Y-m-d H:i') : null;
+        
         // Actualizar fecha usando método del modelo
         $tarea->actualizarFecha($data);
         $tarea->refresh();
+        
+        $fechaNueva = $tarea->fecha_fin ? $tarea->fecha_fin->format('Y-m-d H:i') : null;
+
+        // Registrar trazabilidad si la tarea pertenece a una actividad/proyecto y hubo cambio
+        if ($tarea->actividad_id && $fechaAnterior != $fechaNueva) {
+            $actividad = $tarea->actividad;
+            if ($actividad && $actividad->proyecto_id) {
+                Trazabilidad::create([
+                    'proyecto_id' => $actividad->proyecto_id,
+                    'user_id' => $userId,
+                    'accion' => "Actualizó la fecha de la tarea: {$tarea->nombre}",
+                    'detalle' => "Fase: {$actividad->nombre}\nFecha anterior: " . ($fechaAnterior ?? 'Sin fecha') . "\nFecha nueva: " . ($fechaNueva ?? 'Sin fecha'),
+                    'fecha' => now()
+                ]);
+            }
+        }
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -239,8 +411,42 @@ class TareaController extends Controller
             'usuarios.*' => 'exists:users,id'
         ]);
 
+        // Filtrar usuarios con rol Lector o Auditor (no pueden recibir tareas)
+        $usuariosValidos = [];
+        foreach ($data['usuarios'] as $userId) {
+            $usuario = User::with(['roles.permisos', 'permisosDirectos'])->find($userId);
+            if ($usuario) {
+                // Excluir usuarios con rol Lector o Auditor
+                if (!$usuario->hasRole('Lector') && !$usuario->hasRole('lector')
+                    && !$usuario->hasRole('Auditor') && !$usuario->hasRole('auditor')) {
+                    $usuariosValidos[] = $userId;
+                }
+            }
+        }
+
+        if (empty($usuariosValidos)) {
+            return back()->with('error', 'Ninguno de los usuarios seleccionados puede recibir tareas (usuarios con rol Lector o Auditor no pueden recibir tareas).');
+        }
+
         $tarea = Tarea::findOrFail($id);
-        $tarea->asignarUsuarios($data['usuarios']);
+        $usuariosAnteriores = $tarea->usuariosAsignados->pluck('nombre')->implode(', ') ?: 'Ninguno';
+        $tarea->asignarUsuarios($usuariosValidos);
+        $tarea->refresh();
+        $usuariosNuevos = $tarea->usuariosAsignados->pluck('nombre')->implode(', ') ?: 'Ninguno';
+
+        // Registrar trazabilidad si la tarea pertenece a una actividad/proyecto
+        if ($tarea->actividad_id && $usuariosAnteriores != $usuariosNuevos) {
+            $actividad = $tarea->actividad;
+            if ($actividad && $actividad->proyecto_id) {
+                Trazabilidad::create([
+                    'proyecto_id' => $actividad->proyecto_id,
+                    'user_id' => session('user_id'),
+                    'accion' => "Asignó usuarios a la tarea: {$tarea->nombre}",
+                    'detalle' => "Fase: {$actividad->nombre}\nUsuarios anteriores: {$usuariosAnteriores}\nUsuarios nuevos: {$usuariosNuevos}",
+                    'fecha' => now()
+                ]);
+            }
+        }
 
         return back()->with('success', 'Usuarios asignados correctamente.');
     }
@@ -250,6 +456,11 @@ class TareaController extends Controller
         $tarea = Tarea::findOrFail($id);
         $auth_user = User::with('roles')->find(session('user_id'));
 
+        // Verificar que el usuario no sea Auditor
+        if ($auth_user && ($auth_user->hasRole('Auditor') || $auth_user->hasRole('auditor'))) {
+            abort(403, 'Los usuarios con rol Auditor no pueden eliminar tareas. Solo tienen permisos de lectura.');
+        }
+
         // Validar permisos si la tarea pertenece a una actividad
         if ($tarea->actividad_id) {
             $actividad = $tarea->actividad;
@@ -257,6 +468,17 @@ class TareaController extends Controller
             
             if (!$proyecto->puedeGestionarActividadesYTareas($auth_user)) {
                 abort(403, 'No tienes permisos para eliminar esta tarea.');
+            }
+            
+            // Registrar trazabilidad antes de eliminar
+            if ($actividad && $actividad->proyecto_id) {
+                Trazabilidad::create([
+                    'proyecto_id' => $actividad->proyecto_id,
+                    'user_id' => $auth_user->id,
+                    'accion' => "Eliminó la tarea: {$tarea->nombre}",
+                    'detalle' => "Fase: {$actividad->nombre}\nEstado: {$tarea->estado}\nPrioridad: {$tarea->prioridad}",
+                    'fecha' => now()
+                ]);
             }
         }
 
@@ -271,7 +493,23 @@ class TareaController extends Controller
             'descripcion' => 'nullable|string'
         ]);
 
+        $descripcionAnterior = $tarea->descripcion;
         $tarea->actualizarDescripcion($data['descripcion'] ?? '');
+        $tarea->refresh();
+
+        // Registrar trazabilidad si la tarea pertenece a una actividad/proyecto y hubo cambio
+        if ($tarea->actividad_id && $descripcionAnterior != ($data['descripcion'] ?? '')) {
+            $actividad = $tarea->actividad;
+            if ($actividad && $actividad->proyecto_id) {
+                Trazabilidad::create([
+                    'proyecto_id' => $actividad->proyecto_id,
+                    'user_id' => session('user_id'),
+                    'accion' => "Actualizó la descripción de la tarea: {$tarea->nombre}",
+                    'detalle' => "Fase: {$actividad->nombre}",
+                    'fecha' => now()
+                ]);
+            }
+        }
         
         if ($request->expectsJson()) {
             return response()->json([
@@ -299,6 +537,29 @@ class TareaController extends Controller
                 ], 401);
             }
             return back()->with('error', 'Usuario no autenticado.');
+        }
+
+        // Verificar que el usuario no sea Auditor
+        $auth_user = User::with(['roles.permisos', 'permisosDirectos'])->find($userId);
+        if ($auth_user && ($auth_user->hasRole('Auditor') || $auth_user->hasRole('auditor'))) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Los usuarios con rol Auditor no pueden comentar en tareas. Solo tienen permisos de lectura.'
+                ], 403);
+            }
+            return back()->with('error', 'Los usuarios con rol Auditor no pueden comentar en tareas. Solo tienen permisos de lectura.');
+        }
+
+        // Validar que el usuario tenga permiso "comentar tarea"
+        if (!$auth_user || !$auth_user->hasPermission('comentar tarea')) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No tienes permiso para comentar en tareas.'
+                ], 403);
+            }
+            return back()->with('error', 'No tienes permiso para comentar en tareas.');
         }
 
         try {

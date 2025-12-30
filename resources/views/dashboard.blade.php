@@ -208,6 +208,19 @@
         <p class="dashboard-subtitle">Métricas clave por departamento</p>
     </div>
 
+    @php
+        // Definir valores por defecto si $metricas no está definida
+        $metricas = $metricas ?? [
+            'ranking_departamentos' => [],
+            'tareas_por_mes' => [],
+            'productividad' => [],
+            'proyectos_finalizados' => [
+                'totales' => [],
+                'evolucion' => []
+            ]
+        ];
+    @endphp
+
     {{-- 1. Ranking de Departamentos con Mayor Número de Proyectos --}}
     <div class="chart-wrapper">
         <div class="section-title">Ranking: Departamentos con Mayor Número de Proyectos</div>
@@ -216,7 +229,7 @@
         </div>
     </div>
 
-    @if(count($metricas['ranking_departamentos']) > 0)
+    @if(isset($metricas['ranking_departamentos']) && count($metricas['ranking_departamentos']) > 0)
     <div class="metricas-table">
         <table>
             <thead>
@@ -259,7 +272,7 @@
         </div>
     </div>
 
-    @if(count($metricas['productividad']) > 0)
+    @if(isset($metricas['productividad']) && count($metricas['productividad']) > 0)
     <div class="metricas-table">
         <table>
             <thead>
@@ -310,7 +323,7 @@
         </div>
     </div>
 
-    @if(count($metricas['proyectos_finalizados']['totales']) > 0)
+    @if(isset($metricas['proyectos_finalizados']['totales']) && count($metricas['proyectos_finalizados']['totales']) > 0)
     <div class="metricas-table">
         <table>
             <thead>
@@ -360,7 +373,7 @@ window.addEventListener('load', function() {
     // 1. Gráfico de Ranking de Departamentos
     const ctxRanking = document.getElementById('chartRankingDepartamentos')?.getContext('2d');
     if (ctxRanking) {
-        const datos = @json($metricas['ranking_departamentos']);
+        const datos = @json($metricas['ranking_departamentos'] ?? []);
         new Chart(ctxRanking, {
             type: 'bar',
             data: {
@@ -394,7 +407,7 @@ window.addEventListener('load', function() {
     // 2. Gráfico de Tareas por Mes
     const ctxTareasMes = document.getElementById('chartTareasPorMes')?.getContext('2d');
     if (ctxTareasMes) {
-        const datos = @json($metricas['tareas_por_mes']);
+        const datos = @json($metricas['tareas_por_mes'] ?? []);
         const datasets = datos.series.map((serie, index) => ({
             label: serie.nombre,
             data: serie.datos,
@@ -433,7 +446,7 @@ window.addEventListener('load', function() {
     // 3. Gráfico de Productividad
     const ctxProductividad = document.getElementById('chartProductividad')?.getContext('2d');
     if (ctxProductividad) {
-        const datos = @json($metricas['productividad']);
+        const datos = @json($metricas['productividad'] ?? []);
         new Chart(ctxProductividad, {
             type: 'bar',
             data: {
@@ -480,7 +493,7 @@ window.addEventListener('load', function() {
     // 4. Gráfico de Proyectos Finalizados (Total)
     const ctxFinalizados = document.getElementById('chartProyectosFinalizados')?.getContext('2d');
     if (ctxFinalizados) {
-        const datos = @json($metricas['proyectos_finalizados']['totales']);
+        const datos = @json($metricas['proyectos_finalizados']['totales'] ?? []);
         new Chart(ctxFinalizados, {
             type: 'bar',
             data: {
@@ -513,7 +526,7 @@ window.addEventListener('load', function() {
     // 5. Gráfico de Evolución de Proyectos Finalizados
     const ctxEvolucion = document.getElementById('chartEvolucionFinalizados')?.getContext('2d');
     if (ctxEvolucion) {
-        const datos = @json($metricas['proyectos_finalizados']['evolucion']);
+        const datos = @json($metricas['proyectos_finalizados']['evolucion'] ?? []);
         const datasets = datos.series.map((serie, index) => ({
             label: serie.nombre,
             data: serie.datos,
