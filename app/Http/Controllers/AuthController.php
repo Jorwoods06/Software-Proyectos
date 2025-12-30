@@ -83,7 +83,8 @@ class AuthController extends Controller
         session([
             'jwt_token' => $tokens['token'],
             'user_id'   => $auth_user->id,
-            'nombre'    => $auth_user->nombre
+            'nombre'    => $auth_user->nombre,
+            'color'     => $auth_user->color ?? '#0D6EFD' // Color del usuario o azul por defecto
         ]);
 
         return redirect()->route('dashboard');

@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'Tareas de la Actividad')
+@section('title', 'Tareas de la Fase')
 
 @section('content')
 <div class="container">
-    <h2 class="mb-4">Tareas de la actividad</h2>
+    <h2 class="mb-4">Tareas de la fase</h2>
 
     {{-- Crear tarea --}}
     @can('crear tareas')

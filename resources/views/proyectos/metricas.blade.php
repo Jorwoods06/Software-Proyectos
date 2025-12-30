@@ -373,7 +373,7 @@
         </div>
         <div class="kpi-item">
             <div class="kpi-value">{{ number_format($metricas['kpis']['completitud_actividades'], 1) }}%</div>
-            <div class="kpi-label">Completitud de Actividades</div>
+            <div class="kpi-label">Completitud de Fases</div>
         </div>
         <div class="kpi-item">
             <div class="kpi-value">{{ number_format($metricas['kpis']['avance_proyecto'], 1) }}%</div>
@@ -385,9 +385,9 @@
         </div>
     </div>
 
-    {{-- Gráfico de Actividades por Estado --}}
+    {{-- Gráfico de Fases por Estado --}}
     <div class="chart-wrapper">
-        <div class="section-title">Actividades por Estado</div>
+        <div class="section-title">Fases por Estado</div>
         <div class="stats-row">
             <div class="stat-item">
                 <div class="stat-value">{{ $metricas['actividades']['total'] }}</div>
@@ -462,7 +462,7 @@ window.addEventListener('load', function() {
         return;
     }
 
-    // Gráfico de Actividades por Estado
+    // Gráfico de Fases por Estado
     const ctxActividades = document.getElementById('chartActividades')?.getContext('2d');
     if (ctxActividades) {
         new Chart(ctxActividades, {

@@ -344,7 +344,8 @@ document.addEventListener('DOMContentLoaded', function() {
             usuarios.push({
                 id: user.id,
                 nombre: user.nombre,
-                email: user.email
+                email: user.email,
+                color: user.color || '#0D6EFD'
             });
         });
     });
@@ -390,7 +391,7 @@ document.addEventListener('DOMContentLoaded', function() {
         chip.className = 'colaborador-chip';
         chip.setAttribute('data-user-id', user.id);
         chip.innerHTML = `
-            <div class="colaborador-avatar">${crearChipInicial(user.nombre)}</div>
+            <div class="colaborador-avatar" style="background: ${user.color || '#0D6EFD'};">${crearChipInicial(user.nombre)}</div>
             <div class="colaborador-chip-content">
                 <span class="colaborador-chip-label">${user.nombre}</span>
                 <span class="colaborador-chip-role">${rol.toUpperCase()}</span>

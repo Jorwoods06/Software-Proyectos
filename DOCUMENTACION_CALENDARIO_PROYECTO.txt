@@ -1,0 +1,352 @@
+================================================================================
+DOCUMENTACIÓN: CALENDARIO DE TAREAS POR PROYECTO
+================================================================================
+
+Este documento explica cómo se implementó la funcionalidad del calendario de 
+tareas por proyecto en el sistema de gestión de proyectos.
+
+================================================================================
+1. ESTRUCTURA GENERAL
+================================================================================
+
+El calendario se encuentra en la pestaña "Calendario" dentro de la vista de 
+Fases del Proyecto (resources/views/actividades/index.blade.php).
+
+La funcionalidad está dividida en tres partes principales:
+- Backend (PHP): Obtención y procesamiento de datos
+- Frontend (HTML/CSS): Estructura y estilos del calendario
+- JavaScript: Interactividad y navegación
+
+================================================================================
+2. OBTENCIÓN DE DATOS (Backend - PHP)
+================================================================================
+
+2.1. Recopilación de Tareas
+---------------------------
+Se obtienen todas las tareas del proyecto que:
+- No estén eliminadas (estado != 'eliminado')
+- Tengan fecha de fin asignada (fecha_fin != null)
+- Pertenecen a actividades del proyecto actual
+
+Código ubicado en: resources/views/actividades/index.blade.php (líneas ~1416-1437)
+
+Proceso:
+1. Se itera sobre todas las actividades del proyecto
+2. Para cada actividad, se cargan las tareas con sus relaciones:
+   - usuariosAsignados
+   - actividad (para obtener el nombre de la fase)
+3. Se filtran las tareas válidas (no eliminadas, con fecha_fin)
+4. Se agrupan todas en una colección única
+
+2.2. Agrupación por Fecha
+-------------------------
+Las tareas se agrupan por fecha usando el formato 'Y-m-d':
+
+$tareasPorFecha = $todasTareas->groupBy(function($tarea) {
+    return $tarea->fecha_fin ? $tarea->fecha_fin->format('Y-m-d') : 'sin-fecha';
+});
+
+Esto crea un array asociativo donde:
+- Clave: fecha en formato '2024-01-15'
+- Valor: colección de tareas para esa fecha
+
+2.3. Generación del Calendario Mensual
+---------------------------------------
+Se genera un calendario tipo grid para el mes actual o el mes seleccionado:
+
+- Se obtiene el mes y año desde parámetros URL o valores por defecto
+- Se valida que el mes esté entre 1-12 y el año sea razonable
+- Se crea el primer y último día del mes usando Carbon con zona horaria
+- Se calcula qué día de la semana es el primer día (0=domingo, 6=sábado)
+- Se generan los días del mes anterior (relleno) si es necesario
+- Se generan los días del mes actual
+- Se generan los días del mes siguiente (relleno) si es necesario
+
+================================================================================
+3. ESTRUCTURA HTML DEL CALENDARIO
+================================================================================
+
+3.1. Navegación
+---------------
+Controles para cambiar de mes:
+- Botón "Anterior": cambia al mes previo
+- Botón "Siguiente": cambia al mes siguiente
+- Muestra el mes y año actual en español
+
+3.2. Grid del Calendario
+------------------------
+Estructura CSS Grid de 7 columnas (una por cada día de la semana):
+
+- Headers: Dom, Lun, Mar, Mié, Jue, Vie, Sáb
+- Celdas de días: cada celda contiene:
+  * Número del día
+  * Indicador "HOY" si es el día actual
+  * Tareas del día (máximo 3 visibles)
+  * Contador "+ X más" si hay más de 3 tareas
+
+3.3. Días del Calendario
+------------------------
+Cada día puede tener:
+- Clase "today": si es el día actual (muestra círculo azul y texto "HOY")
+- Clase "otro-mes": si pertenece al mes anterior o siguiente (gris)
+- Tareas sobrepuestas: etiquetas de colores según prioridad/estado
+
+================================================================================
+4. SISTEMA DE COLORES DE TAREAS
+================================================================================
+
+Las tareas se colorean según su estado y prioridad:
+
+4.1. Por Estado:
+- Completado: Verde (#198754)
+- En Progreso: Cian (#0dcaf0)
+- Pendiente: Gris (#6c757d)
+
+4.2. Por Prioridad:
+- Alta: Rojo (#dc3545)
+- Media: Amarillo (#ffc107)
+- Baja: Gris (#6c757d)
+
+4.3. Tareas Vencidas:
+- Rojo con borde izquierdo más oscuro
+- Icono de exclamación (⚠)
+
+4.4. Tareas Completadas:
+- Verde
+- Icono de check (✓)
+
+Prioridad de colores:
+1. Si está vencida → Rojo (vencida)
+2. Si está completada → Verde (estado-completado)
+3. Si está en progreso → Cian (estado-en_progreso)
+4. Si no → Color según prioridad (prioridad-alta/media/baja)
+
+================================================================================
+5. NAVEGACIÓN ENTRE MESES
+================================================================================
+
+5.1. Función JavaScript: cambiarMes()
+--------------------------------------
+Ubicación: resources/views/actividades/index.blade.php (líneas ~2211-2251)
+
+Funcionamiento:
+1. Recibe la dirección (-1 para anterior, 1 para siguiente)
+2. Previene el comportamiento por defecto del botón
+3. Obtiene el mes y año actual desde la URL o valores PHP
+4. Calcula el nuevo mes y año
+5. Maneja el cambio de año (si mes < 1 → diciembre del año anterior)
+6. Construye nueva URL con parámetros ?mes=X&ano=Y
+7. Redirige a la nueva URL
+
+5.2. Persistencia de Pestaña Activa
+------------------------------------
+Para mantener la pestaña "Calendario" activa después de recargar:
+
+- PHP detecta si hay parámetros mes/ano en la URL
+- Si los hay, marca la pestaña "Calendario" como activa
+- JavaScript también verifica al cargar y activa la pestaña correcta
+
+Código PHP (líneas ~1219, 1225, 1264, 1407):
+- Pestaña Fases: active solo si NO hay parámetros
+- Pestaña Calendario: active solo si HAY parámetros
+
+Código JavaScript (líneas ~2257-2275):
+- Verifica URLSearchParams al cargar
+- Activa automáticamente la pestaña de Calendario si detecta parámetros
+
+================================================================================
+6. INTERACCIÓN CON TAREAS
+================================================================================
+
+6.1. Click en Tarea
+-------------------
+Al hacer clic en una tarea del calendario:
+- Se ejecuta: abrirPanelEvidenciasTarea(tareaId)
+- Se abre el panel lateral de Evidencias (ya existente en el sistema)
+- El panel muestra:
+  * Descripción de la tarea
+  * Comentarios
+  * Archivos y evidencias
+
+6.2. Reutilización del Panel de Evidencias
+-------------------------------------------
+No se creó código nuevo, se reutiliza:
+- Panel HTML existente (líneas ~1574-1584)
+- Función abrirPanelEvidenciasTarea() existente (líneas ~2508+)
+- Todas las funcionalidades del panel (editar descripción, comentarios, evidencias)
+
+================================================================================
+7. CONFIGURACIÓN DE ZONA HORARIA
+================================================================================
+
+7.1. Configuración Global
+--------------------------
+Archivo: config/app.php (línea 68)
+- timezone: 'America/Bogota' (Colombia)
+- Permite configuración desde .env con APP_TIMEZONE
+
+7.2. Configuración de Carbon
+----------------------------
+Archivo: app/Providers/AppServiceProvider.php
+- Carbon::setLocale('es') - Idioma español
+- date_default_timezone_set() - Zona horaria por defecto de PHP
+
+7.3. Uso en el Calendario
+--------------------------
+Todas las fechas se crean con zona horaria explícita:
+- Carbon::now('America/Bogota')
+- Carbon::create($ano, $mes, $dia, 0, 0, 0, 'America/Bogota')
+
+Esto asegura que:
+- Las fechas se muestren correctamente según hora de Colombia
+- El día "hoy" se calcule correctamente
+- Las comparaciones de fechas sean precisas
+
+================================================================================
+8. ESTILOS CSS
+================================================================================
+
+8.1. Grid del Calendario
+------------------------
+.calendario-mensual {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+}
+
+8.2. Día Actual
+---------------
+.calendario-dia.today .calendario-dia-numero {
+    background: #0D6EFD;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+}
+
+.calendario-dia.today::after {
+    content: 'HOY';
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    color: #0D6EFD;
+}
+
+8.3. Tareas
+-----------
+.calendario-tarea {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+================================================================================
+9. FLUJO COMPLETO DE FUNCIONAMIENTO
+================================================================================
+
+1. Usuario accede a Fases del Proyecto
+   → Se cargan todas las actividades del proyecto
+
+2. Usuario hace clic en pestaña "Calendario"
+   → Se ejecuta JavaScript que muestra el contenido del calendario
+
+3. Backend procesa las tareas:
+   a. Itera sobre actividades
+   b. Carga tareas con relaciones
+   c. Filtra tareas válidas
+   d. Agrupa por fecha
+
+4. Backend genera el calendario:
+   a. Obtiene mes/año (de URL o actual)
+   b. Crea estructura de días
+   c. Asigna tareas a cada día
+
+5. Frontend renderiza:
+   a. Headers de días de la semana
+   b. Días del mes anterior (relleno gris)
+   c. Días del mes actual con tareas
+   d. Días del mes siguiente (relleno gris)
+
+6. Usuario navega entre meses:
+   a. Click en "Anterior" o "Siguiente"
+   b. JavaScript calcula nuevo mes/año
+   c. Redirige con parámetros ?mes=X&ano=Y
+   d. PHP detecta parámetros y activa pestaña Calendario
+   e. Se regenera calendario con nuevo mes
+
+7. Usuario hace clic en tarea:
+   a. Se ejecuta abrirPanelEvidenciasTarea(tareaId)
+   b. Se abre panel lateral con información de la tarea
+   c. Usuario puede ver/editar descripción, comentarios, evidencias
+
+================================================================================
+10. ARCHIVOS MODIFICADOS/CREADOS
+================================================================================
+
+Archivos modificados:
+1. resources/views/actividades/index.blade.php
+   - Agregada pestaña "Calendario"
+   - Implementado calendario mensual
+   - Agregada función cambiarMes()
+   - Agregada lógica de activación de pestaña
+
+2. config/app.php
+   - Cambiada zona horaria a 'America/Bogota'
+
+3. app/Providers/AppServiceProvider.php
+   - Agregada configuración de Carbon
+   - Agregada configuración de zona horaria PHP
+
+Archivos relacionados (sin modificar):
+- app/Models/Tarea.php (modelo de tareas)
+- app/Models/Actividad.php (modelo de actividades/fases)
+- app/Http/Controllers/ActividadController.php (controlador)
+
+================================================================================
+11. CONSIDERACIONES TÉCNICAS
+================================================================================
+
+11.1. Rendimiento
+-----------------
+- Las tareas se cargan con eager loading para evitar N+1 queries
+- Se usa groupBy() para agrupar eficientemente por fecha
+- El calendario se genera en el servidor (no hay carga AJAX)
+
+11.2. Escalabilidad
+-------------------
+- Si hay muchas tareas, solo se muestran las primeras 3 por día
+- Se muestra contador "+ X más" para días con muchas tareas
+- El calendario maneja correctamente meses con diferentes cantidades de días
+
+11.3. Compatibilidad
+---------------------
+- Usa CSS Grid (compatible con navegadores modernos)
+- JavaScript vanilla (sin dependencias externas)
+- Carbon para manejo de fechas (ya incluido en Laravel)
+
+11.4. Internacionalización
+---------------------------
+- Meses y días en español
+- Zona horaria configurada para Colombia
+- Formato de fechas adaptado al locale español
+
+================================================================================
+12. MEJORAS FUTURAS POSIBLES
+================================================================================
+
+1. Carga AJAX del calendario (sin recargar toda la página)
+2. Vista semanal además de mensual
+3. Filtros por prioridad, estado, o responsable
+4. Drag & drop de tareas para cambiar fechas
+5. Vista de calendario completo (todos los proyectos)
+6. Exportación a PDF o Excel
+7. Sincronización con calendarios externos (Google Calendar, Outlook)
+
+================================================================================
+FIN DE LA DOCUMENTACIÓN
+================================================================================
+

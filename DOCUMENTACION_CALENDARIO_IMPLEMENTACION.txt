@@ -1,0 +1,464 @@
+================================================================================
+DOCUMENTACIÓN: IMPLEMENTACIÓN DEL CALENDARIO DE TAREAS
+================================================================================
+
+Este documento explica cómo se implementó el calendario de tareas del proyecto,
+incluyendo los lenguajes utilizados, la arquitectura y el funcionamiento.
+
+================================================================================
+1. LENGUAJES Y TECNOLOGÍAS UTILIZADAS
+================================================================================
+
+1.1. Backend (Servidor)
+------------------------
+- Lenguaje: PHP 8.x
+- Framework: Laravel
+- Librería de fechas: Carbon (para manejo de fechas y zonas horarias)
+- Controlador: ActividadController.php
+
+1.2. Frontend (Cliente)
+-----------------------
+- Lenguaje: HTML5 + CSS3 + JavaScript (ES6+)
+- Template Engine: Blade (Laravel)
+- Framework CSS: Bootstrap 5
+- Iconos: Bootstrap Icons
+
+1.3. Estructura de Datos
+-------------------------
+- Base de datos: MySQL/MariaDB
+- Modelos Eloquent: Actividad, Tarea, Proyecto, User
+- Relaciones: Actividad -> Tareas, Proyecto -> Actividades
+
+================================================================================
+2. ARQUITECTURA DEL CALENDARIO
+================================================================================
+
+2.1. Flujo de Datos
+--------------------
+1. Usuario accede a la vista de actividades de un proyecto
+2. ActividadController::index() procesa la solicitud
+3. Se obtienen todas las actividades del proyecto
+4. Se recopilan todas las tareas con fecha_fin de todas las actividades
+5. Se agrupan las tareas por fecha (formato Y-m-d)
+6. Se genera la estructura del calendario mensual
+7. Se pasa la información a la vista Blade
+8. La vista renderiza el HTML con los datos
+9. CSS aplica los estilos visuales
+10. JavaScript maneja la navegación entre meses
+
+2.2. Componentes Principales
+----------------------------
+- Controlador: app/Http/Controllers/ActividadController.php
+- Vista: resources/views/actividades/index.blade.php
+- Estilos: CSS embebido en la vista (sección <style>)
+- Scripts: JavaScript embebido en la vista (sección <script>)
+
+================================================================================
+3. IMPLEMENTACIÓN BACKEND (PHP/Laravel)
+================================================================================
+
+3.1. Obtención de Datos
+------------------------
+Ubicación: ActividadController.php, método index()
+
+Proceso:
+1. Se obtiene el proyecto con sus colaboradores
+2. Se valida el acceso del usuario al proyecto
+3. Se obtienen todas las actividades del proyecto
+4. Se itera sobre cada actividad para obtener sus tareas
+
+Código clave:
+```php
+$actividades = Actividad::obtenerConTareasPorProyecto($proyectoId);
+
+// Recopilar todas las tareas del proyecto
+$todasTareas = collect();
+foreach ($actividades as $actividad) {
+    $tareas = $actividad->tareas()
+        ->where('estado', '!=', 'eliminado')
+        ->whereNotNull('fecha_fin')
+        ->with(['usuariosAsignados', 'actividad'])
+        ->get();
+    $todasTareas = $todasTareas->merge($tareas);
+}
+```
+
+3.2. Agrupación por Fecha
+--------------------------
+Las tareas se agrupan usando el método groupBy() de Laravel Collections:
+
+```php
+$tareasPorFecha = $todasTareas->groupBy(function($tarea) {
+    return Carbon::parse($tarea->fecha_fin)->format('Y-m-d');
+});
+```
+
+Resultado: Un array asociativo donde:
+- Clave: fecha en formato '2024-01-15'
+- Valor: colección de tareas para esa fecha
+
+3.3. Generación del Calendario Mensual
+---------------------------------------
+Proceso paso a paso:
+
+1. Obtener mes y año desde parámetros URL o valores por defecto:
+```php
+$mes = $request->get('mes', Carbon::now('America/Bogota')->month);
+$ano = $request->get('ano', Carbon::now('America/Bogota')->year);
+```
+
+2. Validar valores:
+```php
+$mes = max(1, min(12, (int)$mes));
+$ano = max(2020, min(2100, (int)$ano));
+```
+
+3. Crear primer y último día del mes:
+```php
+$primerDia = Carbon::create($ano, $mes, 1, 0, 0, 0, 'America/Bogota');
+$ultimoDia = $primerDia->copy()->endOfMonth();
+```
+
+4. Calcular día de la semana del primer día (0=domingo, 6=sábado):
+```php
+$diaSemanaInicio = $primerDia->dayOfWeek;
+```
+
+5. Agregar celdas vacías al inicio para alineación:
+```php
+for ($i = 0; $i < $diaSemanaInicio; $i++) {
+    $diasMes[] = [
+        'dia' => null,
+        'fecha' => null,
+        'otro_mes' => false,
+        'es_hoy' => false,
+        'tareas' => collect(),
+        'vacio' => true
+    ];
+}
+```
+
+6. Generar días del mes actual:
+```php
+$hoy = Carbon::now('America/Bogota');
+for ($dia = 1; $dia <= $ultimoDia->day; $dia++) {
+    $fecha = Carbon::create($ano, $mes, $dia, 0, 0, 0, 'America/Bogota');
+    $fechaStr = $fecha->format('Y-m-d');
+    $esHoy = $fecha->isSameDay($hoy);
+    
+    $diasMes[] = [
+        'dia' => $dia,
+        'fecha' => $fechaStr,
+        'otro_mes' => false,
+        'es_hoy' => $esHoy,
+        'tareas' => $tareasPorFecha->get($fechaStr, collect()),
+        'vacio' => false
+    ];
+}
+```
+
+3.4. Detección de Pestaña Activa
+----------------------------------
+El controlador determina qué pestaña mostrar según parámetros URL:
+
+```php
+if ($request->has('tab')) {
+    $tabActivo = $request->get('tab');
+} elseif ($request->has('mes') || $request->has('ano')) {
+    $tabActivo = 'calendario';
+} else {
+    $tabActivo = 'fases';
+}
+```
+
+================================================================================
+4. IMPLEMENTACIÓN FRONTEND (HTML/CSS/JavaScript)
+================================================================================
+
+4.1. Estructura HTML (Blade Template)
+--------------------------------------
+Ubicación: resources/views/actividades/index.blade.php
+
+Estructura principal:
+```html
+<div class="calendario-container">
+    <!-- Navegación -->
+    <div class="calendario-navegacion">
+        <button onclick="cambiarMes(-1)">Anterior</button>
+        <h3>{{ $nombreMes }} {{ $ano }}</h3>
+        <button onclick="cambiarMes(1)">Siguiente</button>
+    </div>
+    
+    <!-- Grid del calendario -->
+    <div class="calendario-grid">
+        <!-- Headers de días -->
+        <div class="calendario-header">
+            @foreach($diasSemana as $diaSemana)
+                <div class="calendario-dia-header">{{ $diaSemana }}</div>
+            @endforeach
+        </div>
+        
+        <!-- Días del mes -->
+        <div class="calendario-dias">
+            @foreach($diasMes as $diaInfo)
+                @if($diaInfo['vacio'])
+                    <div class="calendario-dia-vacio"></div>
+                @else
+                    <div class="calendario-dia {{ $diaInfo['es_hoy'] ? 'today' : '' }}">
+                        <div class="calendario-dia-numero">
+                            {{ $diaInfo['dia'] }}
+                            @if($diaInfo['es_hoy'])
+                                <span class="calendario-hoy-badge">HOY</span>
+                            @endif
+                        </div>
+                        <div class="calendario-tareas">
+                            @foreach($diaInfo['tareas']->take(3) as $tarea)
+                                <div class="calendario-tarea {{ $colorClase }}">
+                                    {{ $tarea->nombre }}
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            @endforeach
+        </div>
+    </div>
+</div>
+```
+
+4.2. Estilos CSS
+----------------
+Ubicación: Sección <style> en index.blade.php
+
+Características principales:
+
+a) Grid Layout (CSS Grid):
+```css
+.calendario-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr); /* 7 columnas iguales */
+    gap: 0;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+```
+
+b) Día Actual (HOY):
+```css
+.calendario-dia.today {
+    background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+    border-left: 3px solid #3b82f6;
+}
+```
+
+c) Tareas con colores según estado:
+```css
+.tarea-completada {
+    background: #d1fae5;
+    color: #065f46;
+    border-left: 3px solid #10b981;
+}
+
+.tarea-vencida {
+    background: #fee2e2;
+    color: #991b1b;
+    border-left: 3px solid #dc2626;
+}
+
+.tarea-en-progreso,
+.tarea-pendiente {
+    background: #212B36;
+    color: #ffffff;
+    border-left: 3px solid #212B36;
+}
+```
+
+d) Efectos hover:
+```css
+.calendario-tarea:hover {
+    transform: translateX(3px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+```
+
+4.3. JavaScript para Navegación
+---------------------------------
+Ubicación: Sección <script> en index.blade.php
+
+Función para cambiar de mes:
+```javascript
+function cambiarMes(direccion) {
+    event.preventDefault();
+    
+    // Obtener mes y año actual desde URL
+    const urlParams = new URLSearchParams(window.location.search);
+    let mes = parseInt(urlParams.get('mes')) || {{ $mes }};
+    let ano = parseInt(urlParams.get('ano')) || {{ $ano }};
+    
+    // Calcular nuevo mes y año
+    mes += direccion;
+    
+    // Manejar cambio de año
+    if (mes < 1) {
+        mes = 12;
+        ano -= 1;
+    } else if (mes > 12) {
+        mes = 1;
+        ano += 1;
+    }
+    
+    // Construir nueva URL y redirigir
+    const proyectoId = {{ $proyectoId }};
+    const nuevaUrl = `{{ route('actividades.index', $proyectoId) }}?mes=${mes}&ano=${ano}`;
+    window.location.href = nuevaUrl;
+}
+```
+
+Activación automática de pestaña:
+```javascript
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tieneParametros = urlParams.has('mes') || urlParams.has('ano');
+    
+    if (tieneParametros) {
+        // Activar pestaña de Calendario
+        const tabCalendario = document.querySelector('a[href*="mes="]');
+        const tabFases = document.querySelector('a[href*="actividades"]:not([href*="mes="])');
+        
+        if (tabCalendario && tabFases) {
+            tabCalendario.classList.add('active');
+            tabFases.classList.remove('active');
+        }
+    }
+});
+```
+
+================================================================================
+5. SISTEMA DE COLORES DE TAREAS
+================================================================================
+
+5.1. Lógica de Asignación de Colores
+---------------------------------------
+Ubicación: Vista Blade, dentro del loop de tareas
+
+```php
+@php
+    $esVencida = \Carbon\Carbon::parse($tarea->fecha_fin)->isPast() 
+                 && $tarea->estado !== 'completado';
+    $colorClase = '';
+    
+    if ($esVencida) {
+        $colorClase = 'tarea-vencida';  // Rojo
+    } elseif ($tarea->estado === 'completado') {
+        $colorClase = 'tarea-completada';  // Verde
+    } elseif ($tarea->estado === 'en_progreso') {
+        $colorClase = 'tarea-en-progreso';  // #212B36
+    } elseif ($tarea->estado === 'pendiente') {
+        $colorClase = 'tarea-pendiente';  // #212B36
+    } else {
+        $colorClase = 'tarea-pendiente';  // #212B36 (por defecto)
+    }
+@endphp
+```
+
+5.2. Prioridad de Colores
+--------------------------
+1. Vencida (más alta prioridad visual) → Rojo
+2. Completada → Verde
+3. En progreso → #212B36 (gris oscuro)
+4. Pendiente → #212B36 (gris oscuro)
+
+================================================================================
+6. CARACTERÍSTICAS ESPECIALES
+================================================================================
+
+6.1. Solo Días del Mes Actual
+-------------------------------
+El calendario muestra únicamente los días del mes seleccionado, sin incluir
+días del mes anterior o siguiente. Se agregan celdas vacías al inicio para
+mantener la alineación correcta con los días de la semana.
+
+6.2. Límite de Tareas Visibles
+--------------------------------
+Por cada día, solo se muestran las primeras 3 tareas. Si hay más, se muestra
+un contador "+ X más".
+
+6.3. Tooltips en Hover
+-----------------------
+Las tareas largas se truncan con "..." y muestran el nombre completo en un
+tooltip al hacer hover, usando CSS puro (::after y ::before).
+
+6.4. Zona Horaria
+-----------------
+Todas las fechas se manejan con zona horaria 'America/Bogota' para asegurar
+consistencia en la visualización.
+
+================================================================================
+7. FLUJO COMPLETO DE USO
+================================================================================
+
+1. Usuario accede a actividades de un proyecto
+2. Por defecto se muestra la pestaña "Fases"
+3. Usuario hace clic en pestaña "Calendario"
+4. Se carga el calendario del mes actual con todas las tareas
+5. Usuario puede navegar entre meses con botones "Anterior"/"Siguiente"
+6. JavaScript calcula nuevo mes/año y redirige con parámetros ?mes=X&ano=Y
+7. El controlador detecta parámetros y regenera el calendario
+8. Usuario puede hacer clic en una tarea para ver detalles en panel lateral
+
+================================================================================
+8. ARCHIVOS INVOLUCRADOS
+================================================================================
+
+Backend:
+- app/Http/Controllers/ActividadController.php (líneas 13-130)
+  - Método index(): Genera datos del calendario
+
+Frontend:
+- resources/views/actividades/index.blade.php
+  - Líneas 975-1280: Estilos CSS del calendario
+  - Líneas 1580-1650: HTML del calendario
+  - Líneas 3000-3077: JavaScript de navegación
+
+Modelos (sin modificar, solo se utilizan):
+- app/Models/Actividad.php
+- app/Models/Tarea.php
+- app/Models/Proyecto.php
+
+================================================================================
+9. CONSIDERACIONES TÉCNICAS
+================================================================================
+
+9.1. Rendimiento
+-----------------
+- Las tareas se cargan con eager loading (with()) para evitar N+1 queries
+- Se usa groupBy() de Collections para agrupar eficientemente
+- El calendario se genera en el servidor (no hay carga AJAX)
+
+9.2. Escalabilidad
+------------------
+- Si hay muchas tareas, solo se muestran 3 por día
+- El calendario maneja correctamente meses con diferentes cantidades de días
+- No hay límite en la cantidad de tareas que se pueden mostrar
+
+9.3. Compatibilidad
+-------------------
+- Compatible con navegadores modernos (Chrome, Firefox, Safari, Edge)
+- Responsive design para móviles y tablets
+- Usa CSS Grid (soporte desde 2017)
+
+================================================================================
+10. MEJORAS FUTURAS POSIBLES
+================================================================================
+
+- Carga AJAX para cambiar de mes sin recargar toda la página
+- Vista semanal además de mensual
+- Filtros por estado de tarea
+- Drag and drop para mover tareas entre fechas
+- Exportación a PDF o imagen
+- Integración con calendarios externos (Google Calendar, Outlook)
+
+================================================================================
+FIN DE LA DOCUMENTACIÓN
+================================================================================
+

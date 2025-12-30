@@ -5,7 +5,7 @@
 @section('content')
 <style>
     /* ============================================
-       MOBILE FIRST - Actividades y Tareas
+       MOBILE FIRST - Fases y Tareas
        ============================================ */
     
     .actividades-header {
@@ -91,6 +91,77 @@
     .btn-add-activity:hover {
         background: #0B5ED7;
         color: white;
+    }
+
+    /* Barra de progreso */
+    .fase-progress {
+        margin-top: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .fase-progress-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.375rem;
+        font-size: 0.75rem;
+        color: #6c757d;
+    }
+
+    .fase-progress-bar-container {
+        width: 100%;
+        height: 8px;
+        background-color: #e9ecef;
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .fase-progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #0D6EFD 0%, #0B5ED7 100%);
+        border-radius: 4px;
+        transition: width 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .fase-progress-bar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background: linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.2) 50%,
+            transparent 100%
+        );
+        animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+        0% {
+            transform: translateX(-100%);
+        }
+        100% {
+            transform: translateX(100%);
+        }
+    }
+
+    .fase-progress-bar.completed {
+        background: linear-gradient(90deg, #198754 0%, #157347 100%);
+    }
+
+    .fase-progress-bar.warning {
+        background: linear-gradient(90deg, #FFC107 0%, #E0A800 100%);
+    }
+
+    .fase-progress-percentage {
+        font-weight: 600;
+        color: #212529;
     }
 
     /* Fase/Actividad Card */
@@ -970,7 +1041,614 @@
             max-width: 100%;
         }
     }
+
+    /* ============================================
+       ESTILOS DEL CALENDARIO - Diseño Moderno
+       ============================================ */
+    .calendario-container {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e5e7eb;
+    }
+
+    /* Navegación mejorada */
+    .calendario-navegacion {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        margin-bottom: 1.25rem;
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+    .calendario-navegacion .btn {
+        font-size: 0.8125rem;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        background: #ffffff;
+        color: #374151;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+
+    .calendario-navegacion .btn:hover {
+        background: #f9fafb;
+        border-color: #d1d5db;
+        color: #111827;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .calendario-navegacion .btn:active {
+        transform: translateY(0);
+    }
+
+    .calendario-navegacion h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #111827;
+        margin: 0;
+        letter-spacing: -0.01em;
+    }
+
+    /* Grid del calendario mejorado */
+    .calendario-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 0;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    }
+
+    .calendario-header {
+        display: contents;
+    }
+
+    .calendario-dia-header {
+        background: #f9fafb;
+        padding: 0.875rem 0.5rem;
+        text-align: center;
+        font-weight: 600;
+        font-size: 0.75rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    .calendario-dias {
+        display: contents;
+    }
+
+    .calendario-dia {
+        background: #ffffff;
+        min-height: 110px;
+        padding: 0.5rem;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        border-right: 1px solid #f3f4f6;
+        border-bottom: 1px solid #f3f4f6;
+        transition: background-color 0.15s ease;
+    }
+
+    .calendario-dia:hover {
+        background: #fafbfc;
+    }
+
+    .calendario-dia:last-child,
+    .calendario-dia:nth-child(7n) {
+        border-right: none;
+    }
+
+    .calendario-dia-vacio {
+        background: transparent;
+        border: none;
+        min-height: 110px;
+        padding: 0;
+        cursor: default;
+    }
+
+    .calendario-dia-vacio:hover {
+        background: transparent;
+    }
+
+    .calendario-dia.today {
+        background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+        border-left: 3px solid #3b82f6;
+    }
+
+    .calendario-dia.today:hover {
+        background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%);
+    }
+
+    .calendario-dia.today .calendario-dia-numero {
+        color: #2563eb;
+        font-weight: 700;
+    }
+
+    .calendario-dia-numero {
+        font-size: 0.8125rem;
+        font-weight: 600;
+        margin-bottom: 0.375rem;
+        position: relative;
+        color: #374151;
+        line-height: 1.2;
+    }
+
+    .calendario-hoy-badge {
+        display: inline-block;
+        background: #3b82f6;
+        color: #ffffff;
+        font-size: 0.625rem;
+        padding: 0.125rem 0.375rem;
+        border-radius: 4px;
+        margin-left: 0.375rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        box-shadow: 0 1px 2px rgba(59, 130, 246, 0.3);
+    }
+
+    .calendario-tareas {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        min-height: 0;
+    }
+
+    .calendario-tarea {
+        font-size: 0.6875rem;
+        padding: 0.375rem 0.5rem;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 500;
+        line-height: 1.3;
+        position: relative;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .calendario-tarea:hover {
+        transform: translateX(3px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        z-index: 10;
+    }
+
+    .calendario-tarea-nombre {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .calendario-tarea[title]:hover::after {
+        content: attr(title);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #1f2937;
+        color: #ffffff;
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        z-index: 1000;
+        margin-bottom: 0.25rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        pointer-events: none;
+    }
+
+    .calendario-tarea[title]:hover::before {
+        content: '';
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 4px solid transparent;
+        border-top-color: #1f2937;
+        margin-bottom: -4px;
+        z-index: 1000;
+        pointer-events: none;
+    }
+
+    .calendario-tarea-mas {
+        font-size: 0.625rem;
+        color: #6b7280;
+        padding: 0.25rem 0.5rem;
+        font-style: normal;
+        font-weight: 500;
+        background: #f3f4f6;
+        border-radius: 4px;
+        cursor: default;
+    }
+
+    /* Colores de tareas según estado */
+    .tarea-vencida {
+        background: #fee2e2;
+        color: #991b1b;
+        border-left: 3px solid #dc2626;
+        box-shadow: 0 1px 3px rgba(220, 38, 38, 0.2);
+    }
+
+    .tarea-vencida:hover {
+        background: #fecaca;
+        box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25);
+    }
+
+    .tarea-completada {
+        background: #d1fae5;
+        color: #065f46;
+        border-left: 3px solid #10b981;
+        box-shadow: 0 1px 3px rgba(16, 185, 129, 0.2);
+    }
+
+    .tarea-completada:hover {
+        background: #a7f3d0;
+        box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
+    }
+
+    .tarea-en-progreso,
+    .tarea-pendiente {
+        background: #212B36;
+        color: #ffffff;
+        border-left: 3px solid #212B36;
+        box-shadow: 0 1px 3px rgba(33, 43, 54, 0.3);
+    }
+
+    .tarea-en-progreso:hover,
+    .tarea-pendiente:hover {
+        background: #2d3748;
+        box-shadow: 0 2px 6px rgba(33, 43, 54, 0.4);
+    }
+
+    .tarea-prioridad-alta {
+        background: #212B36;
+        color: #ffffff;
+        border-left: 3px solid #212B36;
+        box-shadow: 0 1px 3px rgba(33, 43, 54, 0.3);
+    }
+
+    .tarea-prioridad-alta:hover {
+        background: #2d3748;
+        box-shadow: 0 2px 6px rgba(33, 43, 54, 0.4);
+    }
+
+    .tarea-prioridad-media {
+        background: #212B36;
+        color: #ffffff;
+        border-left: 3px solid #212B36;
+        box-shadow: 0 1px 3px rgba(33, 43, 54, 0.3);
+    }
+
+    .tarea-prioridad-media:hover {
+        background: #2d3748;
+        box-shadow: 0 2px 6px rgba(33, 43, 54, 0.4);
+    }
+
+    .tarea-prioridad-baja {
+        background: #212B36;
+        color: #ffffff;
+        border-left: 3px solid #212B36;
+        box-shadow: 0 1px 3px rgba(33, 43, 54, 0.3);
+    }
+
+    .tarea-prioridad-baja:hover {
+        background: #2d3748;
+        box-shadow: 0 2px 6px rgba(33, 43, 54, 0.4);
+    }
+
+    @media (max-width: 768px) {
+        .calendario-container {
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .calendario-navegacion {
+            padding: 0.5rem 0;
+            margin-bottom: 1rem;
+        }
+
+        .calendario-navegacion .btn {
+            font-size: 0.75rem;
+            padding: 0.375rem 0.75rem;
+        }
+
+        .calendario-navegacion h3 {
+            font-size: 1.125rem;
+        }
+
+        .calendario-dia {
+            min-height: 85px;
+            padding: 0.375rem;
+        }
+
+        .calendario-tarea {
+            font-size: 0.625rem;
+            padding: 0.3rem 0.4rem;
+        }
+
+        .calendario-dia-numero {
+            font-size: 0.75rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .calendario-dia-header {
+            padding: 0.625rem 0.375rem;
+            font-size: 0.6875rem;
+        }
+
+        .calendario-tarea-mas {
+            font-size: 0.5625rem;
+            padding: 0.2rem 0.4rem;
+        }
+
+        .calendario-hoy-badge {
+            font-size: 0.5625rem;
+            padding: 0.1rem 0.3rem;
+        }
+    }
+
+    /* ============================================
+       ESTILOS DE PESTAÑAS
+       ============================================ */
+    .nav-tabs {
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .nav-tabs .nav-link {
+        color: #000000;
+        border: none;
+        border-bottom: 2px solid transparent;
+        padding: 0.75rem 1rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .nav-tabs .nav-link:hover {
+        color: #000000;
+        border-bottom-color: #dee2e6;
+    }
+
+    .nav-tabs .nav-link.active {
+        color: #000000;
+        font-weight: 600;
+        border-bottom-color: #0D6EFD;
+        background-color: transparent;
+    }
+
+    /* ============================================
+       DISEÑO MOBILE-FIRST - COLABORADORES (ESTILO GRID)
+       ============================================ */
+    .colaboradores-container {
+        background: transparent;
+        padding: 0;
+    }
+
+    .colaboradores-header {
+        margin-bottom: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .colaboradores-header h3 {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #212529;
+        margin: 0;
+    }
+
+    .colaboradores-count {
+        font-size: 0.75rem;
+        font-weight: 400;
+        color: #6c757d;
+        margin-left: 0.375rem;
+    }
+
+    .colaboradores-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .colaborador-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 0.75rem 0.5rem;
+        transition: opacity 0.2s ease;
+    }
+
+    .colaborador-item:hover {
+        opacity: 0.8;
+    }
+
+    .colaborador-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: #ffffff;
+        background: var(--colaborador-color, #0D6EFD);
+        margin-bottom: 0.5rem;
+        flex-shrink: 0;
+    }
+
+    .colaborador-info {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .colaborador-name {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #212529;
+        margin: 0;
+        line-height: 1.3;
+        word-wrap: break-word;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .colaborador-email {
+        font-size: 0.6875rem;
+        color: #6c757d;
+        margin: 0;
+        word-break: break-word;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .colaborador-role {
+        font-size: 0.625rem;
+        font-weight: 500;
+        color: #6c757d;
+        margin: 0;
+        text-transform: capitalize;
+    }
+
+    .colaborador-empty-state {
+        text-align: center;
+        padding: 2rem 1rem;
+        background: #ffffff;
+        border-radius: 6px;
+        border: 1px dashed #dee2e6;
+    }
+
+    .colaborador-empty-state-icon {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 0.75rem;
+        background: #f8f9fa;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #adb5bd;
+        font-size: 1.25rem;
+    }
+
+    .colaborador-empty-state h4 {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #495057;
+        margin: 0 0 0.25rem 0;
+    }
+
+    .colaborador-empty-state p {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin: 0;
+    }
+
+    /* Tablet - 768px and up */
+    @media (min-width: 768px) {
+        .colaboradores-header {
+            margin-bottom: 1.25rem;
+        }
+
+        .colaboradores-header h3 {
+            font-size: 1rem;
+        }
+
+        .colaboradores-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+        }
+
+        .colaborador-item {
+            padding: 1rem 0.75rem;
+        }
+
+        .colaborador-avatar {
+            width: 56px;
+            height: 56px;
+            font-size: 1rem;
+            margin-bottom: 0.625rem;
+        }
+
+        .colaborador-name {
+            font-size: 0.8125rem;
+        }
+
+        .colaborador-email {
+            font-size: 0.75rem;
+        }
+
+        .colaborador-role {
+            font-size: 0.6875rem;
+        }
+    }
+
+    /* Desktop - 992px and up */
+    @media (min-width: 992px) {
+        .colaboradores-header h3 {
+            font-size: 1.125rem;
+        }
+
+        .colaboradores-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+        }
+
+        .colaborador-item {
+            padding: 1.25rem 1rem;
+        }
+
+        .colaborador-avatar {
+            width: 64px;
+            height: 64px;
+            font-size: 1.125rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .colaborador-name {
+            font-size: 0.875rem;
+        }
+
+        .colaborador-email {
+            font-size: 0.8125rem;
+        }
+
+        .colaborador-role {
+            font-size: 0.75rem;
+        }
+    }
 </style>
+
+@php
+    $auth_user = \App\Models\User::with('roles')->find(session('user_id'));
+@endphp
 
 <div class="container">
     {{-- Header --}}
@@ -983,19 +1661,10 @@
             <p class="actividades-subtitle">Gestione el progreso y los detalles de las tareas.</p>
         </div>
         <div class="header-actions">
-            <a href="{{ route('proyectos.index') }}" class="btn-action btn-volver">
-                <i class="bi bi-arrow-left"></i>
-                <span class="d-none d-md-inline">Proyectos</span>
-            </a>
-            <button type="button" class="btn-action btn-colaboradores" data-bs-toggle="modal" data-bs-target="#modalColaboradores">
-                <i class="bi bi-people"></i>
-          
-            </button>
-           
             @permiso('crear actividades')
             <button type="button" class="btn-action btn-add-activity" data-bs-toggle="modal" data-bs-target="#modalCrearActividad">
                 <i class="bi bi-plus-lg"></i>
-                <span class="d-none d-md-inline">Add Activity</span>
+                <span class="d-none d-md-inline">Agregar Fase</span>
             </button>
             @endpermiso
         </div>
@@ -1015,7 +1684,50 @@
         </div>
     @endif
 
-    {{-- Lista de Fases --}}
+    {{-- Pestañas --}}
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link {{ $tabActivo === 'fases' ? 'active' : '' }}" 
+               href="{{ route('actividades.index', $proyectoId) }}" 
+               role="tab">
+                <i class="bi bi-file-text me-1"></i> Fases
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link {{ $tabActivo === 'calendario' ? 'active' : '' }}" 
+               href="{{ route('actividades.index', $proyectoId) }}?mes={{ $mes ?? \Carbon\Carbon::now('America/Bogota')->month }}&ano={{ $ano ?? \Carbon\Carbon::now('America/Bogota')->year }}" 
+               role="tab">
+                <i class="bi bi-calendar me-1"></i> Calendario
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link {{ $tabActivo === 'proyectos' ? 'active' : '' }}" 
+               href="{{ route('proyectos.index') }}" 
+               role="tab">
+                <i class="bi bi-folder me-1"></i> Proyectos
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link {{ $tabActivo === 'usuarios' ? 'active' : '' }}" 
+               href="{{ route('actividades.index', $proyectoId) }}?tab=usuarios" 
+               role="tab">
+                <i class="bi bi-people me-1"></i> Colaboradores
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link {{ $tabActivo === 'analisis' ? 'active' : '' }}" 
+               href="{{ route('proyectos.metricas', $proyectoId) }}" 
+               role="tab">
+                <i class="bi bi-graph-up me-1"></i> Análisis
+            </a>
+        </li>
+    </ul>
+
+    {{-- Contenido de las pestañas --}}
+    <div class="tab-content">
+        {{-- Pestaña Fases --}}
+        <div class="tab-pane fade {{ $tabActivo === 'fases' ? 'show active' : '' }}" id="fases" role="tabpanel">
+            {{-- Lista de Fases --}}
     @forelse($actividades as $actividad)
         @php
             $auth_user = \App\Models\User::with('roles')->find(session('user_id'));
@@ -1040,6 +1752,23 @@
                             Creado el {{ $actividad->created_at->format('d M Y') }} • 
                             {{ $actividad->tareas_pendientes ?? 0 }} tareas pendientes
                         </div>
+                        @php
+                            $totalTareas = $actividad->tareas_count ?? 0;
+                            $tareasCompletadas = $totalTareas > 0 ? $totalTareas - ($actividad->tareas_pendientes ?? 0) : 0;
+                            $porcentaje = $totalTareas > 0 ? round(($tareasCompletadas / $totalTareas) * 100, 1) : 0;
+                            $claseProgreso = $porcentaje == 100 ? 'completed' : ($porcentaje >= 50 ? '' : 'warning');
+                        @endphp
+                        @if($totalTareas > 0)
+                        <div class="fase-progress">
+                            <div class="fase-progress-info">
+                                <span>{{ $tareasCompletadas }} de {{ $totalTareas }} tareas completadas</span>
+                                <span class="fase-progress-percentage">{{ $porcentaje }}%</span>
+                            </div>
+                            <div class="fase-progress-bar-container">
+                                <div class="fase-progress-bar {{ $claseProgreso }}" style="width: {{ $porcentaje }}%;"></div>
+                            </div>
+                        </div>
+                        @endif
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-2" onclick="event.stopPropagation();">
@@ -1154,6 +1883,137 @@
             No hay fases registradas para este proyecto.
         </div>
     @endforelse
+        </div>
+
+        {{-- Pestaña Calendario --}}
+        <div class="tab-pane fade {{ $tabActivo === 'calendario' ? 'show active' : '' }}" id="calendario" role="tabpanel">
+            <div class="calendario-container">
+                {{-- Navegación del calendario --}}
+                <div class="calendario-navegacion">
+                    <button type="button" class="btn" onclick="cambiarMes(-1)">
+                        <i class="bi bi-chevron-left"></i> Anterior
+                    </button>
+                    <h3>{{ $nombreMes ?? 'Enero' }} {{ $ano ?? date('Y') }}</h3>
+                    <button type="button" class="btn" onclick="cambiarMes(1)">
+                        Siguiente <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+
+                {{-- Grid del calendario --}}
+                <div class="calendario-grid">
+                    {{-- Headers de días de la semana --}}
+                    <div class="calendario-header">
+                        @foreach($diasSemana ?? ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'] as $diaSemana)
+                            <div class="calendario-dia-header">{{ $diaSemana }}</div>
+                        @endforeach
+                    </div>
+
+                    {{-- Días del mes --}}
+                    <div class="calendario-dias">
+                        @foreach($diasMes ?? [] as $diaInfo)
+                            @if($diaInfo['vacio'] ?? false)
+                                <div class="calendario-dia calendario-dia-vacio"></div>
+                            @else
+                                <div class="calendario-dia {{ ($diaInfo['es_hoy'] ?? false) ? 'today' : '' }}">
+                                    <div class="calendario-dia-numero">
+                                        {{ $diaInfo['dia'] ?? '' }}
+                                        @if($diaInfo['es_hoy'] ?? false)
+                                            <span class="calendario-hoy-badge">HOY</span>
+                                        @endif
+                                    </div>
+                                    <div class="calendario-tareas">
+                                        @php
+                                            $tareasDia = $diaInfo['tareas'] ?? collect();
+                                            $tareasMostrar = $tareasDia->take(3);
+                                            $tareasRestantes = $tareasDia->count() - 3;
+                                        @endphp
+                                        @foreach($tareasMostrar as $tarea)
+                                            @php
+                                                $esVencida = \Carbon\Carbon::parse($tarea->fecha_fin)->isPast() && $tarea->estado !== 'completado';
+                                                $colorClase = '';
+                                                if ($esVencida) {
+                                                    $colorClase = 'tarea-vencida';
+                                                } elseif ($tarea->estado === 'completado') {
+                                                    $colorClase = 'tarea-completada';
+                                                } elseif ($tarea->estado === 'en_progreso') {
+                                                    $colorClase = 'tarea-en-progreso';
+                                                } elseif ($tarea->estado === 'pendiente') {
+                                                    $colorClase = 'tarea-pendiente';
+                                                } else {
+                                                    $colorClase = 'tarea-pendiente';
+                                                }
+                                            @endphp
+                                            <div class="calendario-tarea {{ $colorClase }}" 
+                                                 onclick="abrirPanelEvidenciasTarea({{ $tarea->id }})"
+                                                 title="{{ $tarea->nombre }}">
+                                                <span class="calendario-tarea-nombre">{{ Str::limit($tarea->nombre, 20) }}</span>
+                                            </div>
+                                        @endforeach
+                                        @if($tareasRestantes > 0)
+                                            <div class="calendario-tarea-mas">
+                                                + {{ $tareasRestantes }} más
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Pestaña Colaboradores --}}
+        <div class="tab-pane fade {{ $tabActivo === 'usuarios' ? 'show active' : '' }}" id="usuarios" role="tabpanel">
+            <div class="colaboradores-container">
+                <div class="colaboradores-header">
+                    <h3>
+                        Colaboradores
+                        <span class="colaboradores-count">({{ $proyecto->colaboradores->count() }})</span>
+                    </h3>
+                </div>
+
+                @if($proyecto->colaboradores->count() > 0)
+                    <div class="colaboradores-grid">
+                        @foreach($proyecto->colaboradores as $colaborador)
+                            @php
+                                $colorColaborador = $colaborador->color ?? '#0D6EFD';
+                                $iniciales = strtoupper(substr($colaborador->nombre, 0, 2));
+                                // Dividir nombre en dos líneas si tiene espacio
+                                $nombrePartes = explode(' ', $colaborador->nombre, 2);
+                                $primerNombre = $nombrePartes[0];
+                                $segundoNombre = isset($nombrePartes[1]) ? $nombrePartes[1] : '';
+                            @endphp
+                            <div class="colaborador-item" style="--colaborador-color: {{ $colorColaborador }};">
+                                <div class="colaborador-avatar" style="background: {{ $colorColaborador }};">
+                                    {{ $iniciales }}
+                                </div>
+                                <div class="colaborador-info">
+                                    <div class="colaborador-name">
+                                        @if($segundoNombre)
+                                            {{ $primerNombre }}<br>{{ $segundoNombre }}
+                                        @else
+                                            {{ $colaborador->nombre }}
+                                        @endif
+                                    </div>
+                                    <div class="colaborador-email">{{ $colaborador->email }}</div>
+                                    <div class="colaborador-role">{{ ucfirst($colaborador->pivot->rol_proyecto ?? 'Colaborador') }}</div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="colaborador-empty-state">
+                        <div class="colaborador-empty-state-icon">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <h4>No hay colaboradores</h4>
+                        <p>Este proyecto aún no tiene colaboradores asignados.</p>
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
 </div>
 
 {{-- Panel Lateral de Evidencias de Tarea --}}
@@ -1172,7 +2032,7 @@
     </div>
 </div>
 
-{{-- Modal para crear actividad --}}
+{{-- Modal para crear fase --}}
 @permiso('crear actividades')
 <div class="modal fade" id="modalCrearActividad" tabindex="-1">
     <div class="modal-dialog">
@@ -2688,6 +3548,63 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// ============================================
+// FUNCIONES PARA CALENDARIO
+// ============================================
+
+function cambiarMes(direccion) {
+    event.preventDefault();
+    
+    // Obtener mes y año actual desde la URL o valores por defecto
+    const urlParams = new URLSearchParams(window.location.search);
+    let mes = parseInt(urlParams.get('mes')) || {{ $mes ?? \Carbon\Carbon::now('America/Bogota')->month }};
+    let ano = parseInt(urlParams.get('ano')) || {{ $ano ?? \Carbon\Carbon::now('America/Bogota')->year }};
+    
+    // Calcular nuevo mes y año
+    mes += direccion;
+    
+    // Manejar cambio de año
+    if (mes < 1) {
+        mes = 12;
+        ano -= 1;
+    } else if (mes > 12) {
+        mes = 1;
+        ano += 1;
+    }
+    
+    // Construir nueva URL
+    const proyectoId = {{ $proyectoId }};
+    const nuevaUrl = `{{ route('actividades.index', $proyectoId) }}?mes=${mes}&ano=${ano}`;
+    
+    // Redirigir
+    window.location.href = nuevaUrl;
+}
+
+// Activar pestaña correcta al cargar
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tieneParametros = urlParams.has('mes') || urlParams.has('ano');
+    
+    if (tieneParametros) {
+        // Activar pestaña de Calendario
+        const tabCalendario = document.querySelector('a[href*="mes="]');
+        const tabFases = document.querySelector('a[href*="actividades"]:not([href*="mes="])');
+        
+        if (tabCalendario && tabFases) {
+            tabCalendario.classList.add('active');
+            tabFases.classList.remove('active');
+            
+            const paneCalendario = document.getElementById('calendario');
+            const paneFases = document.getElementById('fases');
+            
+            if (paneCalendario && paneFases) {
+                paneCalendario.classList.add('show', 'active');
+                paneFases.classList.remove('show', 'active');
+            }
+        }
+    }
+});
 </script>
 
 @endsection

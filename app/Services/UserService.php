@@ -8,6 +8,27 @@ use Illuminate\Support\Facades\DB;
 
 class UserService
 {
+    /** 🟢 Generar color aleatorio para el icono del usuario */
+    private function generarColorUsuario(): string
+    {
+        // Paleta de colores predefinida para iconos de usuarios
+        $colores = [
+            '#0D6EFD', // Azul
+            '#198754', // Verde
+            '#DC3545', // Rojo
+            '#FFC107', // Amarillo
+            '#6F42C1', // Morado
+            '#0DCAF0', // Cian
+            '#FD7E14', // Naranja
+            '#20C997', // Verde agua
+        ];
+        
+        // Seleccionar color basado en el número de usuarios existentes
+        // Esto asegura una distribución más uniforme
+        $totalUsuarios = User::count();
+        return $colores[$totalUsuarios % count($colores)];
+    }
+
     /** 🟢 Crear usuario con roles y heredar permisos */
     public function crearUsuarioConRolYPermisos(array $data): User
     {
@@ -18,6 +39,7 @@ class UserService
                 'password'     => bcrypt($data['password']),
                 'departamento' => $data['departamento'],
                 'estado'       => $data['estado'] ?? 'activo',
+                'color'        => $data['color'] ?? $this->generarColorUsuario(),
             ]);
 
             if (!empty($data['roles'])) {

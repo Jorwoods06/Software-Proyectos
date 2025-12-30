@@ -21,7 +21,8 @@ class TareaVencida extends Mailable
      */
     public function __construct(Tarea $tarea, User $usuario, bool $esAdmin = false)
     {
-        $this->tarea = $tarea;
+        // Cargar relaciones necesarias
+        $this->tarea = $tarea->load(['actividad.proyecto']);
         $this->usuario = $usuario;
         $this->esAdmin = $esAdmin;
     }

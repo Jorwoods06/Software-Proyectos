@@ -132,17 +132,39 @@
 
     .nav-link.has-submenu {
         cursor: pointer;
+        position: relative;
     }
 
     .nav-link.has-submenu::after {
-        content: '\f285';
-        font-family: 'bootstrap-icons';
-        margin-left: auto;
-        transition: transform 0.3s ease;
-        font-size: 0.8rem;
+        display: none;
     }
 
-    .nav-item.has-submenu.open .nav-link.has-submenu::after {
+    .submenu-toggle {
+        background: none;
+        border: none;
+        color: rgba(255, 255, 255, 0.86);
+        cursor: pointer;
+        padding: 0;
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.2s ease, transform 0.3s ease;
+        font-size: 0.8rem;
+        flex-shrink: 0;
+        width: 20px;
+        height: 20px;
+    }
+
+    .submenu-toggle:hover {
+        color: #ffffff;
+    }
+
+    .submenu-toggle i {
+        transition: transform 0.3s ease;
+    }
+
+    .nav-item.has-submenu.open .submenu-toggle i {
         transform: rotate(90deg);
     }
 
@@ -344,6 +366,10 @@
 
         .sidebar.collapsed .submenu {
             display: none !important;
+        }
+
+        .sidebar.collapsed .submenu-toggle {
+            display: none;
         }
 
         .sidebar.collapsed .nav-link.has-submenu::after {
@@ -598,11 +624,16 @@ $proyectoActualId = $actividad ? (int) $actividad->proyecto_id : null;
         </li>
 
         <li class="nav-item has-submenu {{ $proyectosMenuOpen ? 'open' : '' }}">
-            <a href="#"
-                class="nav-link has-submenu {{ request()->routeIs('proyectos.*') || request()->routeIs('actividades.*') || request()->routeIs('tareas.*') ? 'active' : '' }}"
-                onclick="event.preventDefault(); this.closest('.nav-item').classList.toggle('open');">
+            <a href="{{ route('proyectos.index') }}"
+                class="nav-link has-submenu {{ request()->routeIs('proyectos.*') || request()->routeIs('actividades.*') || request()->routeIs('tareas.*') ? 'active' : '' }}">
                 <i class="bi bi-folder"></i>
                 <span>Proyectos</span>
+                <button type="button" 
+                        class="submenu-toggle" 
+                        onclick="event.preventDefault(); event.stopPropagation(); this.closest('.nav-item').classList.toggle('open');"
+                        aria-label="Toggle submenu">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
             </a>
             <ul class="submenu">
                 @forelse($proyectos as $proyecto)

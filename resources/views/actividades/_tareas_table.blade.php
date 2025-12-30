@@ -42,7 +42,7 @@
                         <div class="d-flex align-items-center" style="gap: -8px;">
                             @foreach($tarea->usuariosAsignados->take(3) as $usuario)
                                 <div class="avatar-small" 
-                                     style="background: {{ $tarea->color_prioridad ?? '#0D6EFD' }}; margin-left: {{ $loop->first ? '0' : '-8px' }};"
+                                     style="background: {{ $usuario->color ?? '#0D6EFD' }}; margin-left: {{ $loop->first ? '0' : '-8px' }};"
                                      title="{{ $usuario->nombre }}"
                                      data-bs-toggle="tooltip">
                                     {{ strtoupper(substr($usuario->nombre, 0, 1)) }}

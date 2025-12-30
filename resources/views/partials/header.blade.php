@@ -277,12 +277,16 @@
     </div>
     @endif
 
+    @php
+        $usuarioActual = \App\Models\User::find(session('user_id'));
+        $colorUsuario = $usuarioActual->color ?? session('color') ?? '#0D6EFD';
+    @endphp
     <div class="user-info">
         <div class="user-div">
             <p>Bienvenido</p>
             <span class="user-greeting"> {{ session('nombre') ?? 'Usuario' }}</span>
         </div>
-        <div class="user-avatar">
+        <div class="user-avatar" style="background-color: {{ $colorUsuario }};">
             {{ strtoupper(substr(session('nombre') ?? 'U', 0, 1)) }}
         </div>
     </div>

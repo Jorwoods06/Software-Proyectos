@@ -67,7 +67,7 @@ class ProyectoMetricaController extends Controller
     /**
      * Calcular todas las métricas del proyecto aplicando lógica de negocio
      */
-    private function calcularMetricas(int $proyectoId): array
+    public function calcularMetricas(int $proyectoId): array
     {
         // 1. MÉTRICAS GENERALES DEL PROYECTO
         $infoBasica = ProyectoMetrica::obtenerInformacionBasica($proyectoId);

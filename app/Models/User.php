@@ -17,7 +17,8 @@ class User extends Model
         'email',
         'password',
         'departamento',
-        'estado'
+        'estado',
+        'color'
     ];
 
     // Relaciones

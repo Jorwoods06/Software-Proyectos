@@ -26,8 +26,7 @@ class DashboardController extends Controller
 
         // Verificar que el usuario sea administrador o TI
         if (!$usuario->hasRole('Administrador') && !$usuario->hasRole('admin') && !$usuario->hasRole('TI')) {
-            return redirect()->route('inicio')
-                ->with('error', 'No tienes permisos para acceder al dashboard de administrador.');
+            return redirect()->route('inicio');
         }
 
         // Calcular todas las métricas del dashboard

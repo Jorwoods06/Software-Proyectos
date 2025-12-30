@@ -20,7 +20,8 @@ class TareaAsignada extends Mailable
      */
     public function __construct(Tarea $tarea, User $usuario)
     {
-        $this->tarea = $tarea;
+        // Cargar relaciones necesarias
+        $this->tarea = $tarea->load(['actividad.proyecto']);
         $this->usuario = $usuario;
     }
 
